@@ -9,7 +9,8 @@
         [ring.middleware.params :only (wrap-params)]
         [clj-time.core :only (now)]
         [clj-time.format :only (formatters unparse)]
-        [clojure.java.io :only (output-stream)]))
+        [clojure.java.io :only (output-stream)])
+  (:gen-class))
 
 (declare config)
 (def defaults {:port 9990})
