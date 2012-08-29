@@ -1,5 +1,6 @@
 {
  :port           9999
+ :host           "localhost"
  :dump-dir       "/tmp/dumps"
 
  :latest-version
