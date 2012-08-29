@@ -1,12 +1,12 @@
 (ns dujour.core
-  (:import [org.semver Version]
-           [java.util UUID]
+  (:import [java.util UUID]
            [java.util.zip GZIPOutputStream])
   (:require [ring.util.response :as rr]
             [cheshire.core :as json]
             [fs.core :as fs])
   (:use [ring.adapter.jetty :only (run-jetty)]
         [ring.middleware.params :only (wrap-params)]
+        [clj-semver.core :only (newer?)]
         [clj-time.core :only (now)]
         [clj-time.format :only (formatters unparse)]
         [clojure.java.io :only (output-stream)])
@@ -24,13 +24,6 @@
       (let [result (load-file file)]
         (remove-ns temp-ns)
         result))))
-
-(defn newer?
-  "Is the `available` semver newer than the `current` semver?"
-  [ver1 ver2]
-  {:pre [(string? ver1)
-         (string? ver2)]}
-  (pos? (.compareTo (Version/parse ver1) (Version/parse ver2))))
 
 (defn make-response
   "Build response comparing client's version to latest available"
