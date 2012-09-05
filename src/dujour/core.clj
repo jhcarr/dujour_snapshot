@@ -63,11 +63,11 @@
     (cond
       (not (and product version))
       (-> (rr/response "malformed, yo")
-          (rr/status 406))
+          (rr/status 400))
 
       (not (get-in config [:latest-version product]))
       (-> (rr/response "unknown product")
-          (rr/status 406))
+          (rr/status 404))
 
       :else
       (make-response product version))))
