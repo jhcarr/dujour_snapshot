@@ -31,13 +31,11 @@
   {:pre  [(string? product)
           (string? current-version)]
    :post [(map? %)]}
-  (let [available (get-in config [:latest-version product :version])
-        link      (get-in config [:latest-version product :link])]
-    (-> {:version available
-         :link link
-         :newer (newer? available current-version)}
-        (json/generate-string)
-        (rr/response))))
+  (let [version-info (get-in config [:latest-version product])]
+    (-> version-info
+      (assoc :newer (newer? (:version version-info) current-version))
+      (json/generate-string)
+      (rr/response))))
 
 (defn dump-req-and-resp
   "Ring middleware that dumps successfull (200) requests to a
