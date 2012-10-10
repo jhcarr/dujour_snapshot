@@ -7,6 +7,7 @@
   (:use [ring.adapter.jetty :only (run-jetty)]
         [ring.middleware.params :only (wrap-params)]
         [ring-geoipviz.core :only (wrap-with-geoip wrap-with-buffer)]
+        [clojure.tools.nrepl.server :only (start-server)]
         [clj-semver.core :only (newer?)]
         [clj-time.core :only (now)]
         [clj-time.format :only (formatters unparse)]
@@ -14,7 +15,9 @@
   (:gen-class))
 
 (declare config)
-(def defaults {:port 9990})
+(def defaults {:port 9990 :nrepl-port 9991})
+(declare nrepl-server)
+
 
 (defn guarded-load-file
   "Evaluates all forms in `file` in a temporary namespace, returning
@@ -84,4 +87,5 @@
   [& args]
   (def config (merge defaults
                      (guarded-load-file (first args))))
+  (def nrepl-server (start-server :port (:nrepl-port config)))
   (run-jetty webapp config))
