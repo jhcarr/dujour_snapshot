@@ -87,5 +87,5 @@
   [& args]
   (def config (merge defaults
                      (guarded-load-file (first args))))
-  (def nrepl-server (start-server :port (:nrepl-port config)))
+  (def nrepl-server (start-server :port (:nrepl-port config) :bind "localhost"))
   (run-jetty webapp config))
