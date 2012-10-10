@@ -6,6 +6,7 @@
             [fs.core :as fs])
   (:use [ring.adapter.jetty :only (run-jetty)]
         [ring.middleware.params :only (wrap-params)]
+        [ring-geoipviz.core :only (wrap-with-geoip wrap-with-buffer)]
         [clj-semver.core :only (newer?)]
         [clj-time.core :only (now)]
         [clj-time.format :only (formatters unparse)]
@@ -74,8 +75,10 @@
 
 (def webapp
   (-> version-app
-      (wrap-params)
-      (dump-req-and-resp)))
+      (dump-req-and-resp)
+      (wrap-with-buffer :geoip "/geo" 100)
+      (wrap-with-geoip [:headers "x-real-ip"])
+      (wrap-params)))
 
 (defn -main
   [& args]
