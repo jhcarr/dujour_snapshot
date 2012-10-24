@@ -1,11 +1,17 @@
 {
  :port           9999
- :host           "localhost"
- :dump-dir       "/tmp/dumps"
+ :nrepl-port     10000
+ :dump-dir       "/home/dujour/dumps"
 
  :latest-version
- {"puppetdb" {:version "0.11.0"
-              :message "Version 0.11.0 of PuppetDB is available!"
-              :product "PuppetDB"
-              :link    "https://github.com/puppetlabs/puppetdb/blob/master/CHANGELOG.md"}}
+ {"puppetdb" {:version "1.0.1"
+              :link    "https://github.com/puppetlabs/puppetdb/blob/1.0.1/CHANGELOG.md"}
+  "pe-master" {:version "2.7.0"
+              :message "Version 2.7.0 of Puppet Enterprise is available!"
+              :product "pe-master"
+              :link    "http://docs.puppetlabs.com/pe/2.6/install_upgrading.html"}
+ "pe-agent"  {:version "2.7.0"
+              :message "Version 2.7.0 of Puppet Enterprise is available!"
+              :product "pe-agent"
+              :link    "http://docs.puppetlabs.com/pe/2.6/install_upgrading.html"}}
 }
