@@ -8,6 +8,7 @@
         [ring.middleware.params :only (wrap-params)]
         [ring-geoipviz.core :only (wrap-with-geoip wrap-with-buffer)]
         [clojure.tools.nrepl.server :only (start-server)]
+        [clojure.string :only (join)]
         [clj-semver.core :only (newer?)]
         [clj-time.core :only (now)]
         [clj-time.format :only (formatters unparse)]
@@ -31,15 +32,20 @@
 
 (defn make-response
   "Build response comparing client's version to latest available"
-  [product current-version]
+  [product current-version fmt]
   {:pre  [(string? product)
           (string? current-version)]
    :post [(map? %)]}
-  (let [version-info (get-in config [:latest-version product])]
-    (-> version-info
-      (assoc :newer (newer? (:version version-info) current-version))
-      (json/generate-string)
-      (rr/response))))
+  (let [version-info (get-in config [:latest-version product])
+        response-map (assoc version-info :newer (newer? (:version version-info) current-version))
+        resp (condp = fmt
+               "json"
+               (json/generate-string response-map)
+
+               "txt"
+               (join "\n" (for [[k v] response-map] (format "%s=%s" (name k) v))))
+        ]
+    (rr/response resp)))
 
 (defn dump-req-and-resp
   "Ring middleware that dumps successfull (200) requests to a
@@ -63,23 +69,23 @@
 
 (defn version-app
   [{:keys [params] :as request}]
-  (let [{:strs [product version]} params]
+  (let [{:strs [product version format] :or {format "json"}} params]
     (cond
       (not (and product version))
       (-> (rr/response "malformed, yo")
           (rr/status 400))
 
       (not (get-in config [:latest-version product]))
-      (-> (rr/response "unknown product")
+      (-> (rr/response (clojure.core/format "unknown product %s, yo" product))
           (rr/status 404))
 
       :else
-      (make-response product version))))
+      (make-response product version format))))
 
 (def webapp
   (-> version-app
       (dump-req-and-resp)
-      (wrap-with-buffer :geoip "/geo" 100)
+      (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
       (wrap-with-geoip [:headers "x-real-ip"])
       (wrap-params)))
 
