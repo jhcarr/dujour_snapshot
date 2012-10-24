@@ -16,7 +16,7 @@
   (:gen-class))
 
 (declare config)
-(def defaults {:port 9990 :nrepl-port 9991})
+(def defaults {:host "localhost" :port 9990 :nrepl-port 9991})
 (declare nrepl-server)
 
 
