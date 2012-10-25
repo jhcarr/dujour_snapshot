@@ -5,7 +5,7 @@
 
  :latest-version
  {"puppetdb" {:version "1.0.1"
-              :link    "https://github.com/puppetlabs/puppetdb/blob/1.0.1/CHANGELOG.md"}
+              :link    "https://github.com/puppetlabs/puppetdb/blob/1.0.2/CHANGELOG.md"}
   "pe-master" {:version "2.7.0"
               :message "Version 2.7.0 of Puppet Enterprise is available!"
               :product "pe-master"
