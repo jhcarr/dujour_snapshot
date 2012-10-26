@@ -7,11 +7,11 @@
  {"puppetdb" {:version "1.0.1"
               :link    "https://github.com/puppetlabs/puppetdb/blob/1.0.2/CHANGELOG.md"}
   "pe-master" {:version "2.7.0"
-              :message "Version 2.7.0 of Puppet Enterprise is available!"
+              :message "Version 2.7.0 of Puppet Enterprise is available"
               :product "pe-master"
-              :link    "http://docs.puppetlabs.com/pe/2.6/install_upgrading.html"}
+              :link    "http://links.puppetlabs.com/enterpriseupgrade"}
  "pe-agent"  {:version "2.7.0"
-              :message "Version 2.7.0 of Puppet Enterprise is available!"
+              :message "Version 2.7.0 available for this Puppet Enterprise agent"
               :product "pe-agent"
-              :link    "http://docs.puppetlabs.com/pe/2.6/install_upgrading.html"}}
+              :link    "http://links.puppetlabs.com/enterpriseupgrade"}}
 }
