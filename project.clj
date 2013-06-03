@@ -1,5 +1,5 @@
 (defproject dujour "1.0.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "Version checking backend for Puppet Labs projects."
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [cheshire "4.0.1"]
                  [org.clojure/tools.nrepl "0.2.0-beta9"]

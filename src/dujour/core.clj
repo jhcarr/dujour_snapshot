@@ -15,10 +15,6 @@
         [clojure.java.io :only (output-stream)])
   (:gen-class))
 
-(declare config)
-(def defaults {:host "localhost" :port 9990 :nrepl-port 9991})
-(declare nrepl-server)
-
 
 (defn guarded-load-file
   "Evaluates all forms in `file` in a temporary namespace, returning
@@ -32,12 +28,11 @@
 
 (defn make-response
   "Build response comparing client's version to latest available"
-  [product current-version fmt]
+  [version-info product current-version fmt]
   {:pre  [(string? product)
           (string? current-version)]
    :post [(map? %)]}
-  (let [version-info (get-in config [:latest-version product])
-        response-map (assoc version-info :newer (newer? (:version version-info) current-version))
+  (let [response-map (assoc version-info :newer (newer? (:version version-info) current-version))
         resp (condp = fmt
                "json"
                (json/generate-string response-map)
@@ -50,7 +45,7 @@
 (defn dump-req-and-resp
   "Ring middleware that dumps successfull (200) requests to a
   directory on disk, one gzipped file per request."
-  [app]
+  [dump-dir app]
   (fn [req]
     (let [resp     (app req)
           payload  {:request   (dissoc req :body :ssl-client-cert)
@@ -60,7 +55,7 @@
                     :response  resp}
           datestr  (unparse (formatters :year-month-day) (now))
           filename (str (UUID/randomUUID) ".gz")
-          path     (fs/file (config :dump-dir) datestr filename)
+          path     (fs/file dump-dir datestr filename)
           output   (json/generate-string payload)]
       (when (= (:status resp) 200)
         (fs/mkdirs (fs/parent path))
@@ -68,30 +63,40 @@
       resp)))
 
 (defn version-app
-  [{:keys [params] :as request}]
-  (let [{:strs [product version format] :or {format "json"}} params]
+  "Checks for the correct query string parameters
+  and responds to version requests."
+  [latest-version {:keys [params] :as request}]
+  (let [{:strs [product version format] :or {format "json"}} params
+        version-info (latest-version product)]
     (cond
       (not (and product version))
-      (-> (rr/response "malformed, yo")
+      (-> (rr/response "Malformed, yo")
           (rr/status 400))
 
-      (not (get-in config [:latest-version product]))
-      (-> (rr/response (clojure.core/format "unknown product %s, yo" product))
+      (not version-info)
+      (-> (rr/response (clojure.core/format "Unknown product %s, yo" product))
           (rr/status 404))
 
       :else
-      (make-response product version format))))
+      (make-response version-info product version format))))
 
-(def webapp
-  (-> version-app
-      (dump-req-and-resp)
+(defn make-webapp
+  [{:keys [dump-dir latest-version] :as config}]
+  (let [app #(version-app latest-version %)]
+  (-> (dump-req-and-resp dump-dir app)
       (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
       (wrap-with-geoip [:headers "x-real-ip"])
-      (wrap-params)))
+      (wrap-params))))
 
 (defn -main
   [& args]
-  (def config (merge defaults
-                     (guarded-load-file (first args))))
-  (def nrepl-server (start-server :port (:nrepl-port config) :bind "localhost"))
-  (run-jetty webapp config))
+  ;; Do not proceed if there is no config file
+  (when (empty? args)
+    (println "Need a configuration file, yo")
+    (System/exit 1))
+
+  (let [defaults {:host "localhost" :port 9990 :nrepl-port 9991}
+        config (merge defaults
+                     (guarded-load-file (first args)))
+        nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")]
+    (run-jetty (make-webapp config) config)))
