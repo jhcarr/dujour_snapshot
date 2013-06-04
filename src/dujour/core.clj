@@ -28,19 +28,24 @@
 
 (defn make-response
   "Build response comparing client's version to latest available"
-  [version-info product current-version fmt]
+  [version-info product client-version fmt]
   {:pre  [(string? product)
-          (string? current-version)]
+          (string? client-version)]
    :post [(map? %)]}
-  (let [response-map (assoc version-info :newer (newer? (:version version-info) current-version))
-        resp (condp = fmt
-               "json"
-               (json/generate-string response-map)
+  (try
+    (let [response-map (assoc version-info :newer (newer? (:version version-info) client-version))
+          resp (condp = fmt
+                 "json"
+                 (json/generate-string response-map)
 
-               "txt"
-               (join "\n" (for [[k v] response-map] (format "%s=%s" (name k) v))))
-        ]
-    (rr/response resp)))
+                 "txt"
+                 (join "\n" (for [[k v] response-map] (format "%s=%s" (name k) v))))
+          ]
+      (rr/response resp))
+    (catch IllegalArgumentException msg
+      (-> (rr/response
+            (clojure.core/format "%s is not a valid semantic version number, yo" client-version))
+          (rr/status 400)))))
 
 (defn dump-req-and-resp
   "Ring middleware that dumps successfull (200) requests to a
@@ -67,18 +72,18 @@
   and responds to version requests."
   [latest-version {:keys [params] :as request}]
   (let [{:strs [product version format] :or {format "json"}} params
-        version-info (latest-version product)]
+        latest-version-info (latest-version product)]
     (cond
       (not (and product version))
-      (-> (rr/response "Malformed, yo")
+      (-> (rr/response "No product and/or version parameters in query, yo")
           (rr/status 400))
 
-      (not version-info)
+      (not latest-version-info)
       (-> (rr/response (clojure.core/format "Unknown product %s, yo" product))
           (rr/status 404))
 
       :else
-      (make-response version-info product version format))))
+      (make-response latest-version-info product version format))))
 
 (defn make-webapp
   [{:keys [dump-dir latest-version] :as config}]
