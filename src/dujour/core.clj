@@ -1,9 +1,8 @@
 (ns dujour.core
-  (:import [java.util UUID]
-           [java.util.zip GZIPOutputStream])
   (:require [ring.util.response :as rr]
             [cheshire.core :as json]
-            [fs.core :as fs])
+            [fs.core :as fs]
+            [dujour.db :as db])
   (:use [ring.adapter.jetty :only (run-jetty)]
         [ring.middleware.params :only (wrap-params)]
         [ring-geoipviz.core :only (wrap-with-geoip wrap-with-buffer)]
@@ -11,7 +10,8 @@
         [clojure.string :only (join)]
         [clj-semver.core :only (newer?)]
         [clj-time.core :only (now)]
-        [clj-time.format :only (formatters unparse)]
+        [clj-time.format :only (formatters parse unparse)]
+        [clj-time.coerce :only (to-timestamp)]
         [clojure.java.io :only (output-stream)])
   (:gen-class))
 
@@ -49,28 +49,22 @@
 
 (defn dump-req-and-resp
   "Ring middleware that dumps successfull (200) requests to a
-  directory on disk, one gzipped file per request."
-  [dump-dir app]
+  database."
+  [database app]
   (fn [req]
     (let [resp     (app req)
-          payload  {:request   (dissoc req :body :ssl-client-cert)
+          output  {:request   (dissoc req :body :ssl-client-cert)
                     ;; ^^ certain attributes of the response can't be
                     ;; serialized to JSON, like OutputStreams and such
-                    :timestamp (System/currentTimeMillis)
-                    :response  resp}
-          datestr  (unparse (formatters :year-month-day) (now))
-          filename (str (UUID/randomUUID) ".gz")
-          path     (fs/file dump-dir datestr filename)
-          output   (json/generate-string payload)]
+                   :timestamp (to-timestamp (now))}]
       (when (= (:status resp) 200)
-        (fs/mkdirs (fs/parent path))
-        (spit (GZIPOutputStream. (output-stream path)) output))
+        (db/dump-req database output))
       resp)))
 
 (defn version-app
   "Checks for the correct query string parameters
   and responds to version requests."
-  [latest-version {:keys [params] :as request}]
+  [database latest-version {:keys [params] :as request}]
   (let [{:strs [product version format] :or {format "json"}} params
         latest-version-info (latest-version product)]
     (cond
@@ -82,13 +76,17 @@
       (-> (rr/response (clojure.core/format "Unknown product %s, yo" product))
           (rr/status 404))
 
+      (not (db/release? database product version))
+      (-> (rr/response (clojure.core/format  "%s %s is not a stable release of a Puppet Labs product, yo" product version))
+          (rr/status 404))
+
       :else
       (make-response latest-version-info product version format))))
 
 (defn make-webapp
-  [{:keys [dump-dir latest-version] :as config}]
-  (let [app #(version-app latest-version %)]
-  (-> (dump-req-and-resp dump-dir app)
+  [{:keys [latest-version database] :as config}]
+  (let [app #(version-app  database latest-version %)]
+    (-> (dump-req-and-resp database app)
       (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
       (wrap-with-geoip [:headers "x-real-ip"])
       (wrap-params))))
