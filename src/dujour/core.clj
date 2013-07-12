@@ -28,12 +28,14 @@
 
 (defn make-response
   "Build response comparing client's version to latest available"
-  [version-info product client-version fmt]
+  [database product version fmt]
   {:pre  [(string? product)
-          (string? client-version)]
+          (string? version)]
    :post [(map? %)]}
   (try
-    (let [response-map (assoc version-info :newer (newer? (:version version-info) client-version))
+    (let [version-info (db/get-release database product)
+          response-map (assoc version-info :newer (newer? (:version version-info) version))
+
           resp (condp = fmt
                  "json"
                  (json/generate-string response-map)
@@ -43,8 +45,9 @@
           ]
       (rr/response resp))
     (catch IllegalArgumentException msg
+      (println msg)
       (-> (rr/response
-            (clojure.core/format "%s is not a valid semantic version number, yo" client-version))
+            (clojure.core/format "%s is not a valid semantic version number, yo" version))
           (rr/status 400)))))
 
 (defn dump-req-and-resp
@@ -64,28 +67,23 @@
 (defn version-app
   "Checks for the correct query string parameters
   and responds to version requests."
-  [database latest-version {:keys [params] :as request}]
-  (let [{:strs [product version format] :or {format "json"}} params
-        latest-version-info (latest-version product)]
+  [database {:keys [params] :as request}]
+  (let [{:strs [product version format] :or {format "json"}} params]
     (cond
       (not (and product version))
       (-> (rr/response "No product and/or version parameters in query, yo")
           (rr/status 400))
 
-      (not latest-version-info)
-      (-> (rr/response (clojure.core/format "Unknown product %s, yo" product))
-          (rr/status 404))
-
-      (not (db/release? database product version))
-      (-> (rr/response (clojure.core/format  "%s %s is not a stable release of a Puppet Labs product, yo" product version))
+      (not (db/product? database product))
+      (-> (rr/response (clojure.core/format  "%s is not a Puppet Labs product, yo" product))
           (rr/status 404))
 
       :else
-      (make-response latest-version-info product version format))))
+      (make-response database product version format))))
 
 (defn make-webapp
-  [{:keys [latest-version database] :as config}]
-  (let [app #(version-app  database latest-version %)]
+  [{:keys [database] :as config}]
+  (let [app #(version-app  database %)]
     (-> (dump-req-and-resp database app)
       (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
       (wrap-with-geoip [:headers "x-real-ip"])

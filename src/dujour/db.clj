@@ -9,12 +9,22 @@
         [clj-time.format :only (formatters unparse)])
   (:gen-class))
 
-(defn release?
-  "Checks the dujour database for whether a given product and version has 
+(defn product?
+  "Checks the dujour database for whether a given product has
   an entry in the releases table."
-  [database product version]
+  [database product]
   (not (empty? (jdbc/query database
-                           (sql/select * :releases (sql/where {:product product :version version}))))))
+                           (sql/select * :releases (sql/where {:product product}))))))
+
+(defn get-release
+  "Returns a record of the response information for a given release,
+  i.e. link and message information."
+  [database product]
+  (let [sql-query (sql/select [:version :message :link :product]
+                              :releases (sql/where {:product product}) (sql/order-by {:release_date :desc}))
+        release-info (first (jdbc/query database sql-query))
+        release-response (into {} (filter identity release-info))]
+  (if (= product "puppetdb") (dissoc release-response :product :message) release-response)))
 
 (defn dump-req
   "Inserts a request into a dujour configured PostgreSQL table"
