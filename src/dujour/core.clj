@@ -10,7 +10,6 @@
         [clojure.string :only (join)]
         [clj-semver.core :only (newer?)]
         [clj-time.core :only (now)]
-        [clj-time.format :only (formatters parse unparse)]
         [clj-time.coerce :only (to-timestamp)]
         [clojure.java.io :only (output-stream)])
   (:gen-class))
@@ -34,8 +33,9 @@
    :post [(map? %)]}
   (try
     (let [version-info (db/get-release database product)
-          response-map (assoc version-info :newer (newer? (:version version-info) version))
-
+          response-map (->> (assoc version-info :newer (newer? (:version version-info) version))
+                            (remove (comp nil? val))
+                            (into {}))
           resp (condp = fmt
                  "json"
                  (json/generate-string response-map)
@@ -45,7 +45,6 @@
           ]
       (rr/response resp))
     (catch IllegalArgumentException msg
-      (println msg)
       (-> (rr/response
             (clojure.core/format "%s is not a valid semantic version number, yo" version))
           (rr/status 400)))))

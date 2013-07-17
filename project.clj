@@ -11,7 +11,8 @@
                  [ring/ring-jetty-adapter "1.1.3"]
                  ;; Database connectivity
                  [org.clojure/java.jdbc "0.3.0-alpha4"]
-                 [postgresql/postgresql "9.1-901.jdbc4"]]
+                 [postgresql/postgresql "9.1-901.jdbc4"]
+                 [org.hsqldb/hsqldb "2.2.9"]]
   :aot [dujour.core]
   :main dujour.core
 )
