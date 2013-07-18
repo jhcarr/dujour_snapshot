@@ -11,7 +11,7 @@
    :subprotocol "hsqldb"
    :subname (str "mem:"
                  (java.util.UUID/randomUUID)
-                 ";shutdown=true;hsqldb.tx=mvcc;sql.syntax_pgs=true")})
+                 ";shutdown=false;hsqldb.tx=mvcc;sql.syntax_pgs=true")})
 
 ;; here is a sample test-db-config function for use with postgres
 ;(defn test-db-config

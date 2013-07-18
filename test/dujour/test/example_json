@@ -1,0 +1,62 @@
+{
+   "request":{
+      "remote-addr":"127.0.0.1",
+      "scheme":"http",
+      "query-params":{
+         "format":"txt",
+         "os":"CentOS 5.7",
+         "version":"2.7.0",
+         "product":"pe-master"
+      },
+      "form-params":{
+
+      },
+      "request-method":"get",
+      "query-string":"product=pe-master&version=2.7.0&os=CentOS%205.7&format=txt",
+      "content-type":null,
+      "uri":"/",
+      "server-name":"127.0.0.1",
+      "params":{
+         "product":"pe-master",
+         "version":"2.7.0",
+         "os":"CentOS 5.7",
+         "format":"txt"
+      },
+      "headers":{
+         "x-real-ip":"24.8.63.199",
+         "connection":"close",
+         "user-agent":"curl/7.15.5 (i686-redhat-linux-gnu) libcurl/7.15.5 OpenSSL/0.9.8b zlib/1.2.3 libidn/0.6.5",
+         "accept":"*/*",
+         "host":"127.0.0.1:9999"
+      },
+      "content-length":null,
+      "geoip":{
+         "city":"Denver",
+         "country":{
+            "name":"United States",
+            "iso-3166-1-alpha-2":"us"
+         },
+         "location":{
+            "latitude":39.90040588378906,
+            "longitude":-104.94280242919922
+         },
+         "street-name":null,
+         "street-number":null,
+         "postal-code":null,
+         "region":{
+            "id":"CO"
+         },
+         "provider":"Maxmind"
+      },
+      "server-port":9999,
+      "character-encoding":null
+   },
+   "timestamp":1372602346230,
+   "response":{
+      "status":200,
+      "headers":{
+
+      },
+      "body":"newer=true\nlink=http://links.puppetlabs.com/enterpriseupgrade\nversion=2.8.2\nproduct=pe-master\nmessage=Security release version 2.8.2 of Puppet Enterprise is available"
+   }
+}

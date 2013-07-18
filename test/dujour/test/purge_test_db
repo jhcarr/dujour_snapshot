@@ -1,0 +1,3 @@
+#! /bin/zsh
+
+psql dujourdbtest -f init_test_db.sql
