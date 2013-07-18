@@ -7,12 +7,11 @@
 (defn test-db-config
   "Return a map of connection attrs for the test database"
   []
-  {:database
-   {:classname "org.hsql.jdbcDriver"
-    :subprotocol "hsqldb"
-    :subname (str "mem:"
-                  (java.util.UUID/randomUUID)
-                  ";shutdown=true;hsqldb.tx=mvcc;sql.syntax_pgs=true")}})
+  {:classname "org.hsql.jdbcDriver"
+   :subprotocol "hsqldb"
+   :subname (str "mem:"
+                 (java.util.UUID/randomUUID)
+                 ";shutdown=true;hsqldb.tx=mvcc;sql.syntax_pgs=true")})
 
 ;; here is a sample test-db-config function for use with postgres
 ;(defn test-db-config

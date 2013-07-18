@@ -10,8 +10,7 @@
         [clojure.string :only (join)]
         [clj-semver.core :only (newer?)]
         [clj-time.core :only (now)]
-        [clj-time.coerce :only (to-timestamp)]
-        [clojure.java.io :only (output-stream)])
+        [clj-time.coerce :only (to-timestamp)])
   (:gen-class))
 
 

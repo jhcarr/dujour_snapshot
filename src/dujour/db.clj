@@ -2,6 +2,7 @@
   (:require [cheshire.core :as json]
             [fs.core :as fs]
             [clojure.java.jdbc :as jdbc]
+            [dujour.jdbc.ddl :as ddl]
             [clojure.java.jdbc.sql :as sql])
   (:use [clojure.string :only (join)]
         [clj-semver.core :only (newer?)]

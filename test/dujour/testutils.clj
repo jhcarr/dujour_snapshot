@@ -53,5 +53,5 @@
   that exist within it.  Expects to be called from within a db binding.  You
   Exercise extreme caution when calling this function!"
   [database]
-  (doseq [table-name (cons "test" (sql-database-table-names))]
+  (doseq [table-name (cons "test" (sql-database-table-names database))]
     (jdbc/db-do-commands database (ddl/drop-table table-name))))
