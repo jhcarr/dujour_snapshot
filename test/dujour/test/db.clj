@@ -3,17 +3,11 @@
             [clojure.java.jdbc.sql :as sql])
   (:use [dujour.db])
   (:use [clojure.test]
-        [dujour.fixtures]))
+        [dujour.fixtures]
+        [clj-time.core :only (now)]
+        [clj-time.coerce :only (to-timestamp)]))
 
 (use-fixtures :each with-test-database)
-
-(def database
-  {:classname "org.postgresql.Driver"
-  :subprotocol "postgresql"
-  :subname "//localhost:5432/dujourdbtest"
-  :user "justincarr"
-  :password ""}
-  )
 
 (def test-releases
   {"puppetdb" {:product "puppetdb"
@@ -30,22 +24,84 @@
   )
 
 (deftest test-product?
-  "Tests product? function with no argument, invalid argument and valid argument."
     (jdbc/insert! *db* :releases (test-releases "puppetdb"))
-    (is (not (product? *db* "")))
-    (is (not (product? *db* "This is a test!")))
-    (is (product? *db* "puppetdb"))
+    (testing "Tests product? function with empty string."
+      (is (not (product? *db* "")))
+      )
+    (testing "Tests product? function with invalid argument."
+      (is (not (product? *db* "This is a test!")))
+      )
+    (testing "Tests product? function with valid argument."
+      (is (product? *db* "puppetdb"))
+      )
     )
 
 (deftest test-get-release
-  "Tests get-release function with no argument, invalid argument and valid argument"
   (let [ pe-agent (test-releases "pe-agent") ]
     (jdbc/insert! *db* :releases pe-agent)
-    (is (empty? (get-release *db* "")))
-    (is (empty? (get-release *db* "This is a test!")))
-    (is (= pe-agent (get-release *db* "pe-agent")))
+    (testing "Tests get-release with empty string."
+      (is (empty? (get-release *db* "")))
+      )
+    (testing "Tests get-release with invalid argument."
+      (is (empty? (get-release *db* "This is a test!")))
+      )
+    (testing "Tests get-release with valid argument"
+      (is (= pe-agent (get-release *db* "pe-agent")))
+      )
     )
   )
 
 (deftest test-dump-req
-  "Tests dump-req ... but we're not sure how yet.")
+  (let [pe-master (test-releases "pe-master")
+        skynet {:version "6.6.6"
+                :message "Prepare to meet absolution, human."
+                :product "Skynet"
+                :link    "http://terminator.wikia.com/wiki/Skynet"}
+        req1 {:request {:params {"product" "Skynet"
+                                 "version" "6.6.6"}
+                        :headers {"x-real-ip" "24.8.63.199"}
+                        }
+              :timestamp (to-timestamp (now))}
+        req2 {:request {:params {"product" "pe-master"
+                                 "version" "3.0.0"}
+                        :headers {"x-real-ip" "24.8.63.199"}
+                        }
+              :timestamp (to-timestamp (now))}
+        ]
+    (jdbc/insert! *db* :releases pe-master)
+    (jdbc/insert! *db* :releases skynet)
+
+    (testing "Tests dump-req with single req"
+      (dump-req *db* req1)
+      (is (= (req1 :timestamp)
+             ((first (jdbc/query *db* (sql/select [:timestamp] :checkins))) :timestamp))
+          )
+      (is (= (((req1 :request) :headers) "x-real-ip")
+             ((first (jdbc/query *db* (sql/select [:ip] :checkins))) :ip))
+          )
+      (is (= (((req1 :request) :params) "product")
+             ((first (jdbc/query *db* (sql/select [:product] :checkins))) :product))
+          )
+      (is (= (((req1 :request) :params) "version")
+             ((first (jdbc/query *db* (sql/select [:version] :checkins))) :version))
+          )
+      )
+    
+    (testing "Tests dump-req with second req"
+      (dump-req *db* req2)
+      (is (= (req2 :timestamp)
+             ((second (jdbc/query *db* (sql/select [:timestamp] :checkins))) :timestamp))
+          )
+      (is (= (((req2 :request) :headers) "x-real-ip")
+             ((second (jdbc/query *db* (sql/select [:ip] :checkins))) :ip))
+          )
+      (is (= (((req2 :request) :params) "product")
+             ((second (jdbc/query *db* (sql/select [:product] :checkins))) :product))
+          )
+      (is (= (((req2 :request) :params) "version")
+             ((second (jdbc/query *db* (sql/select [:version] :checkins))) :version))
+          )
+      )
+    )
+  )
+
