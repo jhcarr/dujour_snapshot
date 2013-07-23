@@ -7,7 +7,7 @@
                  ;; Semantic versioning
                  [grimradical/clj-semver "0.1.0-SNAPSHOT"]
                  [grimradical/ring-geoipviz "0.1.0-SNAPSHOT"]
-                 [clj-time "0.4.4"]
+                 [clj-time "0.5.1"]
                  [fs "1.3.2"]
                  [ring/ring-core "1.1.3"]
                  [ring/ring-jetty-adapter "1.1.3"]

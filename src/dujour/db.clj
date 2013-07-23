@@ -7,7 +7,9 @@
   (:use [clojure.string :only (join)]
         [clj-semver.core :only (newer?)]
         [clj-time.core :only (now)]
-        [clj-time.format :only (formatters unparse)])
+        [clj-time.format :only (formatters unparse)]
+        [clj-time.coerce :only (to-timestamp)]
+        )
   (:gen-class))
 
 (defn sql-database-table-names
@@ -20,10 +22,34 @@
         results (jdbc/query database sql-query)]
     (map :table_name results)))
 
+(defn is-release?
+  "Checks the dujour database for whether a given product and version has
+  an entry in the releases table."
+  [database product version]
+  {:pre [(map? database)
+         (string? product)
+         (string? version)]}
+  (not (empty? (jdbc/query database
+                           (sql/select * :releases
+                                       (sql/where {:releases.product product
+                                                   :releases.version version}))))))
+
+(defn make-release!
+  "If a given product and version does not have release info in the database,
+  make a table entry for it."
+  [database product version]
+  {:pre [(map? database)
+         (string? product)
+         (string? version)]}
+  (when-not (is-release? database product version)
+    (jdbc/insert! database :releases {:product product :version version})))
+
 (defn product?
   "Checks the dujour database for whether a given product has
   an entry in the releases table."
   [database product]
+  {:pre [(map? database)
+         (string? product)]}
   (not (empty? (jdbc/query database
                            (sql/select * :releases (sql/where {:releases.product product}))))))
 
@@ -31,26 +57,30 @@
   "Returns a record of the response information for a given release,
   i.e. link and message information."
   [database product]
+  {:pre [(map? database)
+         (string? product)]
+   :post [(map? %)]}
   (let [sql-query (sql/select [:version :message :link :product]
                               :releases (sql/where {:releases.product product})
                               (sql/order-by {:releases.release_date :desc}))
         release-info (first (jdbc/query database sql-query))]
+    ;; Still necessary since we do the same thing in core?
     (into {} (remove (comp nil? val) release-info))))
 
 (defn dump-req
-  "Inserts a request into a dujour configured PostgreSQL table"
-  [database {:keys [request timestamp] :as req}]
-  (let [{:keys [params headers]} request
-        {:strs [product version]} params
-        {:strs [x-real-ip]} headers
-        checkin_id
-        (:checkin_id
-          (first (jdbc/insert! database :checkins {:timestamp timestamp
-                                                  :ip x-real-ip
-                                                  :product product
-                                                  :version version})))
-        other-params (dissoc params "fmt" "product" "version")]
-    (when-not (empty? other-params)
-      (apply jdbc/insert! database :params
-                          (for [[param value] other-params]
-                            {:checkin_id checkin_id :param param :value value})))))
+  "Inserts a formatted dujour request into a PostgreSQL table"
+  [database req]
+  {:pre [(map? database)
+         (map? req)]}
+  (jdbc/db-transaction [conn database]
+    (let [{:strs [product version ip timestamp params]} req]
+      (make-release! conn product version)
+      (let [checkin_id
+            (:checkin_id (first (jdbc/insert! conn :checkins {:timestamp timestamp
+                                                              :ip ip
+                                                              :product product
+                                                              :version version})))]
+        (when-not (empty? params)
+          (apply jdbc/insert! conn :params
+                 (for [[param value] params]
+                   {:checkin_id checkin_id :param param :value value})))))))
