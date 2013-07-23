@@ -72,7 +72,8 @@
   database."
   [database app]
   {:pre [(map? database)
-         (ifn? app)]}
+         (ifn? app)]
+   :post [(ifn? %)]}
   (fn [req]
     (let [resp     (app req)
           output  (format-checkin req (to-timestamp (now)))]

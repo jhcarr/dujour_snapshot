@@ -71,7 +71,11 @@
   "Inserts a formatted dujour request into a PostgreSQL table"
   [database req]
   {:pre [(map? database)
-         (map? req)]}
+         (map? req)
+         (string? (req "product"))
+         (string? (req "version"))
+         (string? (req "ip"))
+         (map? (req "params"))]}
   (jdbc/db-transaction [conn database]
     (let [{:strs [product version ip timestamp params]} req]
       (make-release! conn product version)
