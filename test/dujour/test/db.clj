@@ -57,48 +57,40 @@
                 :message "Prepare to meet absolution, human."
                 :product "Skynet"
                 :link    "http://terminator.wikia.com/wiki/Skynet"}
-        req1 {:request {:params {"product" "Skynet"
-                                 "version" "6.6.6"}
-                        :headers {"x-real-ip" "24.8.63.199"}
-                        }
-              :timestamp (to-timestamp (now))}
-        req2 {:request {:params {"product" "pe-master"
-                                 "version" "3.0.0"}
-                        :headers {"x-real-ip" "24.8.63.199"}
-                        }
-              :timestamp (to-timestamp (now))}
-        ]
+        req1 {"product" "Skynet" "version" "6.6.6" "ip" "24.8.63.199" "timestamp" (to-timestamp (now)) "params" {} }
+        req2 {"product" "pe-master" "version" "3.0.0" "ip" "24.8.63.199" "timestamp" (to-timestamp (now)) "params" {} }]
+    
     (jdbc/insert! *db* :releases pe-master)
     (jdbc/insert! *db* :releases skynet)
-
+    
     (testing "Tests dump-req with single req"
       (dump-req *db* req1)
-      (is (= (req1 :timestamp)
+      (is (= (req1 "timestamp")
              ((first (jdbc/query *db* (sql/select [:timestamp] :checkins))) :timestamp))
           )
-      (is (= (((req1 :request) :headers) "x-real-ip")
+      (is (= (req1 "ip")
              ((first (jdbc/query *db* (sql/select [:ip] :checkins))) :ip))
           )
-      (is (= (((req1 :request) :params) "product")
+      (is (= (req1 "product")
              ((first (jdbc/query *db* (sql/select [:product] :checkins))) :product))
           )
-      (is (= (((req1 :request) :params) "version")
+      (is (= (req1 "version")
              ((first (jdbc/query *db* (sql/select [:version] :checkins))) :version))
           )
       )
     
     (testing "Tests dump-req with second req"
       (dump-req *db* req2)
-      (is (= (req2 :timestamp)
+      (is (= (req2 "timestamp")
              ((second (jdbc/query *db* (sql/select [:timestamp] :checkins))) :timestamp))
           )
-      (is (= (((req2 :request) :headers) "x-real-ip")
+      (is (= (req2 "ip")
              ((second (jdbc/query *db* (sql/select [:ip] :checkins))) :ip))
           )
-      (is (= (((req2 :request) :params) "product")
+      (is (= (req2 "product")
              ((second (jdbc/query *db* (sql/select [:product] :checkins))) :product))
           )
-      (is (= (((req2 :request) :params) "version")
+      (is (= (req2 "version")
              ((second (jdbc/query *db* (sql/select [:version] :checkins))) :version))
           )
       )
