@@ -53,14 +53,12 @@
           (rr/status 400)))))
 
 (defn format-checkin
-  [request timestamp]
-  {:pre [(map? request)
-         (map? (request :params))
-         ((request :params) "product")
-         ((request :params) "version")]
+  [{:keys [params headers remote-addr] :as request} timestamp]
+  {:pre [(map? params)
+         (params  "product")
+         (params "version")]
    :post [(map? %)]}
-  (let [{:keys [params headers remote-addr]} request
-        {:strs [product version]} params
+  (let [{:strs [product version]} params
         {:strs [x-real-ip]} headers
         ip (or x-real-ip remote-addr)
         other-params (dissoc params "fmt" "product" "version")
