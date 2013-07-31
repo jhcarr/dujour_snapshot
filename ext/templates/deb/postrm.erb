@@ -4,7 +4,7 @@ case "$1" in
     purge)
         rm -rf <%= @install_dir -%>
 
-        # Remove puppet log files
+        # Remove dujour log files
         rm -rf <%= @log_dir %>
         ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)

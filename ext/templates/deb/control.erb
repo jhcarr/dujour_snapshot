@@ -2,12 +2,12 @@ Source: <%= @name %>
 Section: utils
 Priority: optional
 Maintainer: Puppet Labs <info@puppetlabs.com>
-Build-Depends: debhelper (>= 7.0.0~), cdbs, rake, facter, puppet
+Build-Depends: debhelper (>= 7.0.0~), cdbs, rake, facter
 Standards-Version: 3.9.1
 Homepage: http://puppetlabs.com
 
 Package: <%= @name %>
 Architecture: all
-Depends: ${misc:Depends},  java6-runtime-headless, adduser, puppet (>= 2.7.12)
+Depends: ${misc:Depends},  java6-runtime-headless, adduser
 Suggests: postgresql
 Description: Puppet Labs version-checking backend.

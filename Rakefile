@@ -30,7 +30,7 @@ def cp_p(src, dest, options={})
   cp(src, dest, options.merge(mandatory))
 end
 
-# We want to use puppetdb's package:tar and its dependencies, because it
+# We want to use dujour's package:tar and its dependencies, because it
 # contains all the special java snowflake magicks, so we have to clear the
 # packaging repo's. We also want to use puppetdb's clean task, since it has so
 # much more clean than the packaging repo knows about
@@ -44,12 +44,6 @@ end
 @log_dir = "/var/log/dujour"
 @lib_dir = "/var/lib/dujour"
 @name = "dujour"
-
-# We only need the ruby major, minor versions
-@ruby_version = (ENV['RUBY_VER'] || Facter.value(:rubyversion))[0..2]
-unless ['1.8','1.9'].include?(@ruby_version)
-  STDERR.puts "Warning: Existing rake commands are untested on #{@ruby_version} currently supported rubies include 1.8 or 1.9"
-end
 
 PATH = ENV['PATH']
 DESTDIR=  ENV['DESTDIR'] || ''
@@ -81,14 +75,6 @@ end
 
 file "ext/files/config.ini" => [ :template, JAR_FILE ]   do
 end
-
-# The first package build tasks in puppetdb were rake deb and rake srpm (due to
-# a cyclical dependency bug, the namespaced aliases to these tasks never worked
-# actually worked). The packaging repo doesn't provide rake deb/srpm (they're
-# namespaced as package:deb/srpm) and its just as well so we don't conflict
-# here when we try to emulate the original behavior here backwards
-# compatibility.  These two tasks will force a reload of the packaging repo and
-# then use it to do the same thing the original tasks did.
 
 desc 'Build deb package'
 task :deb => [ 'package:implode', 'package:bootstrap', 'package:deb' ]
