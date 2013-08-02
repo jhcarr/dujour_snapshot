@@ -136,11 +136,11 @@
                  (:params)
                  (keywordize-keys)
                  (dissoc :foo)
-                 (assoc :checkin_id 0 :ip (-> req
-                                              (keywordize-keys)
-                                              (:headers)
-                                              (:x-real-ip))))
-             (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp)))
+                 (assoc :ip (-> req
+                                (keywordize-keys)
+                                (:headers)
+                                (:x-real-ip))))
+             (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp :checkin_id)))
       )
     )
   )
@@ -199,11 +199,11 @@
                  (:params)
                  (keywordize-keys)
                  (dissoc :foo)
-                 (assoc :checkin_id 0 :ip (-> success-req
-                                              (keywordize-keys)
-                                              (:headers)
-                                              (:x-real-ip))))
-             (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp)))
+                 (assoc :ip (-> success-req
+                                (keywordize-keys)
+                                (:headers)
+                                (:x-real-ip))))
+             (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp :checkin_id)))
       )
     )
   )
