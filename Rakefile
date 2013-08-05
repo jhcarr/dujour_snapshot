@@ -32,7 +32,7 @@ end
 
 # We want to use dujour's package:tar and its dependencies, because it
 # contains all the special java snowflake magicks, so we have to clear the
-# packaging repo's. We also want to use puppetdb's clean task, since it has so
+# packaging repo's. We also want to use dujour's clean task, since it has so
 # much more clean than the packaging repo knows about
 ['package:tar', 'clean'].each do |task|
   Rake::Task[task].clear if Rake::Task.task_defined?(task)
@@ -52,7 +52,7 @@ DESTDIR=  ENV['DESTDIR'] || ''
 
 @default_java_args = "-Xmx192m "
 
-# All variables have been set, so we can load the puppetdb tasks
+# All variables have been set, so we can load the dujour tasks
 Dir[ File.join(RAKE_ROOT, 'tasks','*.rake') ].sort.each { |t| load t }
 
 task :default => [ :package ]

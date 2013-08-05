@@ -1,4 +1,4 @@
-# Task to install puppetdb's files into a target directory
+# Task to install dujour's files into a target directory
 #
 # DESTDIR is defined in the top-level Rakefile
 # JAR_FILE is defined in the ext/tar.rake file
