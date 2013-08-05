@@ -1,5 +1,6 @@
 (defproject dujour "1.0.0-SNAPSHOT"
   :description "Version checking backend for Puppet Labs projects."
+  :plugins  [[ragtime/ragtime.lein "0.3.3"]]
   :dependencies [[org.clojure/clojure "1.4.0"]
                  ;; JSON encoding
                  [cheshire "5.2.0"]
@@ -14,8 +15,12 @@
                  ;; Database connectivity
                  [org.clojure/java.jdbc "0.3.0-alpha4"]
                  [postgresql/postgresql "9.1-901.jdbc4"]
-                 [org.hsqldb/hsqldb "2.2.9"]]
-  :profiles {:dev {:resource-paths ["test-resources"],
+                 [org.hsqldb/hsqldb "2.2.9"]
+                 ;; Database Migrations
+                 [ragtime "0.3.3"]]
+  :ragtime {:migrations ragtime.sql.files/migrations
+            :database "jdbc:postgresql://localhost:5432/dujourdb"}
+  :profiles {:dev {:resource-paths ["test-resources"]
                    :dependencies [[ring-mock "0.1.1"]]}}
   :aot [dujour.core]
   :main dujour.core

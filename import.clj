@@ -8,16 +8,18 @@
             )
   (:use [clojure.java.io]
         [clj-time.local :only (local-now)]
-        [clj-time.coerce :only (from-sql-date)]
+        [clj-time.coerce :only (to-timestamp from-sql-date)]
         [clj-time.format :only (formatters unparse)]
         ))
 
 (def db
   {:classname "org.postgresql.Driver"
   :subprotocol "postgresql"
-  :subname "//localhost:5432/dujourdb"
-  :user "aroetker"
-  :password "'"})
+  :subname "//localhost:5432/dujourdb"})
+
+(defn keywordify-keys
+  [request]
+  (into {} (for [[k v] request] [(keyword k) v])))
 
 (defn last-dump-date
   "Gets the latest timestamp's date from dujourdb"
@@ -32,7 +34,7 @@
   [database file]
   (println file)
   (doseq [{:strs [request timestamp]} (json/parsed-seq (java.io.FileReader. file))]
-    (db/dump-req database request  (to-timestamp timestamp))))
+    (db/dump-req database (core/format-checkin (keywordify-keys request) (to-timestamp timestamp)))))
 
 (defn import-dumps
   ""
