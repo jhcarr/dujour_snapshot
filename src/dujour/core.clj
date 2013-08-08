@@ -2,6 +2,7 @@
   (:require [ring.util.response :as rr]
             [cheshire.core :as json]
             [fs.core :as fs]
+            [dujour.jdbc :as dj-jdbc]
             [dujour.db :as db])
   (:use [ring.adapter.jetty :only (run-jetty)]
         [ring.middleware.params :only (wrap-params)]
@@ -100,8 +101,9 @@
   [{:keys [database] :as config}]
   {:pre [(map? database)]
    :post [(ifn? %)]}
-  (let [app #(version-app  database %)]
-    (-> (dump-req-and-resp database app)
+  (let [db (dj-jdbc/pooled-datasource database)
+        app #(version-app db %)]
+    (-> (dump-req-and-resp db app)
       (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
       (wrap-with-geoip [:headers "x-real-ip"])
       (wrap-params))))

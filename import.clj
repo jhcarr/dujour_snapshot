@@ -2,10 +2,10 @@
   (:require [cheshire.core :as json]
             [clojure.java.jdbc.sql :as sql]
             [clojure.java.jdbc :as jdbc]
+            [dujour.jdbc :as dj-jdbc]
             [dujour.db :as db]
             [dujour.core :as core]
-            [fs.core :as fs]
-            )
+            [fs.core :as fs])
   (:use [clojure.java.io]
         [clj-time.local :only (local-now)]
         [clj-time.coerce :only (to-timestamp from-sql-date)]
@@ -13,9 +13,10 @@
         ))
 
 (def db
+  (dj-jdbc/pooled-datasource
   {:classname "org.postgresql.Driver"
   :subprotocol "postgresql"
-  :subname "//localhost:5432/dujourdb"})
+  :subname "//localhost:5432/dujourdb"}))
 
 (defn keywordify-keys
   [request]
@@ -47,7 +48,3 @@
     (pmap #(dump-reqs-from-file database %)))))
 
 (import-dumps db "/Users/aroetker/Projects/dujourdb/dumps")
-
-
-
-

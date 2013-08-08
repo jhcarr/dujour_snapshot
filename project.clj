@@ -12,7 +12,14 @@
                  [fs "1.3.2"]
                  [ring/ring-core "1.1.3"]
                  [ring/ring-jetty-adapter "1.1.3"]
+                 [log4j "1.2.16" :exclusions [javax.mail/mail
+                                              javax.jms/jms
+                                              com.sun.jdmk/jmxtools
+                                              com.sun.jmx/jmxri]]
                  ;; Database connectivity
+                 [com.jolbox/bonecp "0.7.1.RELEASE" :exclusions [org.slf4j/slf4j-api]]
+                 ;; Configure jetty to use log4
+                 [org.slf4j/slf4j-log4j12 "1.7.5"]
                  [org.clojure/java.jdbc "0.3.0-alpha4"]
                  [postgresql/postgresql "9.1-901.jdbc4"]
                  [org.hsqldb/hsqldb "2.2.9"]
