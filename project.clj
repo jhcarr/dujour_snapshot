@@ -21,6 +21,7 @@
                  ;; Configure jetty to use log4
                  [org.slf4j/slf4j-log4j12 "1.7.5"]
                  [org.clojure/java.jdbc "0.3.0-alpha4"]
+                 [korma "0.3.0-RC5"]
                  [postgresql/postgresql "9.1-901.jdbc4"]
                  [org.hsqldb/hsqldb "2.2.9"]
                  ;; Database Migrations
