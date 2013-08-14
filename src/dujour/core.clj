@@ -10,8 +10,10 @@
         [clojure.string :only (join)]
         [clojure.walk :only (stringify-keys)]
         [clj-semver.core :only (newer?)]
+        [dujour.migrations :only (migrate-db!)]
         [clj-time.core :only (now)]
-        [clj-time.coerce :only (to-timestamp)])
+        [clj-time.coerce :only (to-timestamp)]
+        )
   (:gen-class))
 
 
@@ -97,7 +99,7 @@
       (make-response database product version format))))
 
 (defn make-webapp
-  [{:keys [database] :as config}]
+  [database]
   {:pre [(map? database)]
    :post [(ifn? %)]}
   (let [app #(version-app  database %)]
@@ -116,5 +118,7 @@
   (let [defaults {:host "localhost" :port 9990 :nrepl-port 9991}
         config (merge defaults
                       (guarded-load-file (first args)))
-        nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")]
-    (run-jetty (make-webapp config) config)))
+        nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")
+        {:keys [database]} config]
+    (migrate-db! database)
+    (run-jetty (make-webapp database) config)))

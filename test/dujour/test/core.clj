@@ -13,7 +13,6 @@
         [clj-time.coerce :only (to-timestamp)]
         [clojure.walk]))
 
-
 (use-fixtures :each with-test-database)
 
 (deftest response-making
@@ -129,7 +128,7 @@
       ((dump-req-and-resp *db* fail-app) req)
       (is (empty? (jdbc/query *db* (sql/select * :checkins))))
       )
-    
+
     (testing "Tests dump-req-and-resp with valid app"
       ((dump-req-and-resp *db* success-app) req)
       (is (= (-> req
@@ -162,7 +161,7 @@
                (rr/status 404))
            (version-app *db* invalid-product-req)
            )
-        )    
+        )
     )
   (testing "Tests version-app with valid product and version"
     (let [product ((:params valid-req) "product")
@@ -185,16 +184,14 @@
                               "version" "1.0.1"
                               "foo" "bar"}
                      :headers {"x-real-ip" "255.255.255.255"}
-                     :fmt "json"}
-        config {:database *db*}]
-    
+                     :fmt "json"}]
+
     (testing "Tests make-webapp with an invalid request."
-      ((make-webapp config) fail-req)
-      (is (empty? (jdbc/query *db* (sql/select * :checkins))))
-      )
+      ((make-webapp *db*) fail-req)
+      (is (empty? (jdbc/query *db* (sql/select * :checkins)))))
 
     (testing "Tests make-webapp with a valid request."
-      ((make-webapp config) success-req)
+      ((make-webapp *db*) success-req)
       (is (= (-> success-req
                  (:params)
                  (keywordize-keys)
