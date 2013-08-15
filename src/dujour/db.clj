@@ -3,13 +3,15 @@
             [fs.core :as fs]
             [clojure.java.jdbc :as jdbc]
             [dujour.jdbc.ddl :as ddl]
-            [clojure.java.jdbc.sql :as sql])
-  (:use [clojure.string :only (join)]
-        [clj-semver.core :only (newer?)]
-        [clj-time.core :only (now)]
-        [clj-time.format :only (formatters unparse)]
-        [clj-time.coerce :only (to-timestamp)]
-        )
+            [clojure.java.jdbc.sql :as sql]
+            [korma.core :refer :all]
+            [korma.db :refer :all]
+            [clojure.string :refer (join)]
+            [clj-semver.core :refer (newer?)]
+            [clj-time.core :refer (now)]
+            [clj-time.format :refer (formatters unparse)]
+            [clj-time.coerce :refer (to-timestamp)]
+            )
   (:gen-class))
 
 (defn sql-database-table-names
