@@ -7,7 +7,7 @@
 (defn test-db-config
   "Return a map of connection attrs for the test database"
   []
-  {:classname "org.hsql.jdbcDriver"
+  {:classname "org.hsqldb.jdbcDriver"
    :subprotocol "hsqldb"
    :subname (str "mem:"
                  (java.util.UUID/randomUUID)

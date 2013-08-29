@@ -1,12 +1,6 @@
 (ns dujour.db
-  (:require [cheshire.core :as json]
-            [fs.core :as fs]
-            [clojure.java.jdbc :as jdbc]
-            [dujour.jdbc.ddl :as ddl]
+  (:require [clojure.java.jdbc :as jdbc]
             [clojure.java.jdbc.sql :as sql]
-            [korma.core :refer :all]
-            [korma.db :refer :all]
-            [clojure.string :refer (join)]
             [clj-semver.core :refer (newer?)]
             [clj-time.core :refer (now)]
             [clj-time.format :refer (formatters unparse)]
@@ -20,6 +14,7 @@
   to allow introspection on the database.  (Some of our unit tests rely on this.)"
   [database]
   (let [sql-query (sql/select [:table_name] {:information_schema.tables :i}
+                              ;; Do we need a "WHERE" in here?
                               ["LOWER(i.table_schema) = 'public'"])
         results (jdbc/query database sql-query)]
     (map :table_name results)))
@@ -36,6 +31,16 @@
                                        (sql/where {:releases.product product
                                                    :releases.version version}))))))
 
+(defn is-user?
+  "Checks the dujour database for whether a given ip has
+  an entry in the users table."
+  [database ip]
+  {:pre [(map? database)
+         (string? ip)]}
+  (not (empty? (jdbc/query database
+                           (sql/select * :users
+                                       (sql/where {:users.ip ip}))))))
+
 (defn make-release!
   "If a given product and version does not have release info in the database,
   make a table entry for it."
@@ -46,14 +51,23 @@
   (when-not (is-release? database product version)
     (jdbc/insert! database :releases {:product product :version version})))
 
+(defn make-user!
+  "If a given ip does not have user info in the database,
+  make a table entry for it."
+  [database ip]
+  {:pre [(map? database)
+         (string? ip)]}
+  (when-not (is-user? database ip)
+    (jdbc/insert! database :users {:ip ip})))
+
 (defn product?
   "Checks the dujour database for whether a given product has
-  an entry in the releases table."
+  an entry in the products table."
   [database product]
   {:pre [(map? database)
          (string? product)]}
   (not (empty? (jdbc/query database
-                           (sql/select * :releases (sql/where {:releases.product product}))))))
+                           (sql/select * :products (sql/where {:products.product product}))))))
 
 (defn get-release
   "Returns a record of the response information for a given release,
@@ -81,6 +95,7 @@
   (jdbc/db-transaction [conn database]
     (let [{:strs [product version ip timestamp params]} req]
       (make-release! conn product version)
+      (make-user! conn ip)
       (let [checkin_id
             (:checkin_id (first (jdbc/insert! conn :checkins {:timestamp timestamp
                                                               :ip ip

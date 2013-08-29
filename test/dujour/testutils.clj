@@ -1,9 +1,7 @@
 (ns dujour.testutils
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.java.jdbc.sql :as sql]
-            [dujour.jdbc.ddl :as ddl])
+            [clojure.java.jdbc.sql :as sql])
   (:use [dujour.db :only [sql-database-table-names]]))
-
 
 (defn test-db-config
   "This is a placeholder function; it is supposed to return a map containing
@@ -52,5 +50,6 @@
   that exist within it.  Expects to be called from within a db binding.  You
   Exercise extreme caution when calling this function!"
   [database]
-  (doseq [table-name (sql-database-table-names database)]
-    (jdbc/db-do-commands database true (ddl/drop-table table-name))))
+  (jdbc/db-transaction [conn database]
+    (doseq [table-name (sql-database-table-names conn)]
+      (jdbc/db-do-commands conn true ["DROP TABLE IF EXISTS ? CASCADE" table-name]))))

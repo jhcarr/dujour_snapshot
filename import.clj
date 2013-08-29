@@ -22,14 +22,6 @@
   [request]
   (into {} (for [[k v] request] [(keyword k) v])))
 
-(defn last-dump-date
-  "Gets the latest timestamp's date from dujourdb"
-  [database]
-  (let [sql-query (sql/select [:timestamp] {:checkins :ch} (sql/order-by {:ch.timestamp :desc}))
-        newest-timestamp (:timestamp (first (jdbc/query database sql-query)))]
-    ;; from-sql-date to cast the java.sql.Timestamp
-    (unparse (formatters :date) (from-sql-date newest-timestamp))))
-
 (defn dump-reqs-from-file
   "Parses and dumps a file with JSON dujour requests to the dujour psqldb"
   [database file]
@@ -41,10 +33,10 @@
   ""
   [database dump-dir-path]
   (dorun (->> dump-dir-path
-    (file)
-    (file-seq)
-    (reverse)
-    (filter fs/file?)
-    (pmap #(dump-reqs-from-file database %)))))
+              (file)
+              (file-seq)
+              (reverse)
+              (filter fs/file?)
+              (pmap #(dump-reqs-from-file database %)))))
 
 (import-dumps db "/Users/aroetker/Projects/dujourdb/dumps")

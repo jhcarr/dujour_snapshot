@@ -5,7 +5,7 @@
  :database
  {:classname "org.postgresql.Driver"
   :subprotocol "postgresql"
-  :subname "//localhost:5432/dujourdb"}
+  :subname "//localhost:5432/dujour"}
 
 
  :latest-version

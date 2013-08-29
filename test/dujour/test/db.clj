@@ -7,7 +7,7 @@
         [clj-time.core :only (now)]
         [clj-time.coerce :only (to-timestamp)]))
 
-(use-fixtures :each with-test-database)
+(use-fixtures :each with-test-database with-test-default-releases)
 
 (def test-releases
   {"puppetdb" {:product "puppetdb"
@@ -20,49 +20,35 @@
    "pe-agent"  {:version "3.0.0"
                 :message "Version 3.0.0 available for this Puppet Enterprise agent"
                 :product "pe-agent"
-                :link    "http://links.puppetlabs.com/enterpriseupgrade"}}
-  )
+                :link    "http://links.puppetlabs.com/enterpriseupgrade"}})
 
 (deftest test-product?
-    (jdbc/insert! *db* :releases (test-releases "puppetdb"))
     (testing "Tests product? function with empty string."
-      (is (not (product? *db* "")))
-      )
+      (is (not (product? *db* ""))))
     (testing "Tests product? function with invalid argument."
-      (is (not (product? *db* "This is a test!")))
-      )
+      (is (not (product? *db* "This is a test!"))))
     (testing "Tests product? function with valid argument."
-      (is (product? *db* "puppetdb"))
-      )
-    )
+      (is (product? *db* "puppetdb"))))
 
 (deftest test-get-release
   (let [ pe-agent (test-releases "pe-agent") ]
-    (jdbc/insert! *db* :releases pe-agent)
     (testing "Tests get-release with empty string."
-      (is (empty? (get-release *db* "")))
-      )
+      (is (empty? (get-release *db* ""))))
     (testing "Tests get-release with invalid argument."
-      (is (empty? (get-release *db* "This is a test!")))
-      )
+      (is (empty? (get-release *db* "This is a test!"))))
     (testing "Tests get-release with valid argument"
       (is (= pe-agent (get-release *db* "pe-agent")))
-      )
-    )
-  )
+      )))
 
 (deftest test-dump-req
   (let [pe-master (test-releases "pe-master")
         skynet {:version "6.6.6"
                 :message "Prepare to meet absolution, human."
-                :product "Skynet"
+                :product "puppetdb"
                 :link    "http://terminator.wikia.com/wiki/Skynet"}
-        req1 {"product" "Skynet" "version" "6.6.6" "ip" "24.8.63.199" "timestamp" (to-timestamp (now)) "params" {} }
+        req1 {"product" "puppetdb" "version" "6.6.6" "ip" "24.8.63.199" "timestamp" (to-timestamp (now)) "params" {} }
         req2 {"product" "pe-master" "version" "3.0.0" "ip" "24.8.63.199" "timestamp" (to-timestamp (now)) "params" {} }]
-    
-    (jdbc/insert! *db* :releases pe-master)
-    (jdbc/insert! *db* :releases skynet)
-    
+
     (testing "Tests dump-req with single req"
       (dump-req *db* req1)
       (is (= (req1 "timestamp")
@@ -76,9 +62,8 @@
           )
       (is (= (req1 "version")
              ((first (jdbc/query *db* (sql/select [:version] :checkins))) :version))
-          )
-      )
-    
+          ))
+
     (testing "Tests dump-req with second req"
       (dump-req *db* req2)
       (is (= (req2 "timestamp")
@@ -92,8 +77,5 @@
           )
       (is (= (req2 "version")
              ((second (jdbc/query *db* (sql/select [:version] :checkins))) :version))
-          )
-      )
-    )
-  )
+          ))))
 
