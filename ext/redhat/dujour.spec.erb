@@ -1,0 +1,149 @@
+%global realname dujour
+%global realversion <%= @version %>
+%global rpmversion <%= @rpmversion %>
+
+# Fedora 17 ships with openjdk 1.7.0
+%if 0%{?fedora} >= 17
+%global open_jdk          java-1.7.0-openjdk
+%else
+%global open_jdk          java-1.6.0-openjdk
+%endif
+
+# These macros are not always defined on much older rpm-based systems
+%global  _sharedstatedir /var/lib
+%global  _realsysconfdir /etc
+%global  _initddir   %{_realsysconfdir}/rc.d/init.d
+%global _rundir /var/run
+
+Name:          dujour
+Version:       <%= @rpmversion %>
+Release:       <%= @rpmrelease %>%{?dist}
+BuildRoot:     %{_tmppath}/%{realname}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+Summary:       Puppet Labs version-checking backend
+License:       ASL 2.0
+
+URL:           http://github.com/puppetlabs/dujour
+Source0:       http://downloads.puppetlabs.com/dujour/%{realname}-%{realversion}.tar.gz
+
+Group:         System Environment/Daemons
+
+BuildRequires: facter >= 1.6.8
+BuildRequires: rubygem-rake
+BuildRequires: ruby
+Requires:      facter >= 1.6.8
+BuildArch:     noarch
+BuildRequires: /usr/sbin/useradd
+Requires:      chkconfig
+BuildRequires: %{open_jdk}
+Requires:      %{open_jdk}
+
+%description
+Puppet Labs version-checking backend.
+
+
+%prep
+%setup -q -n %{realname}-%{realversion}
+
+%build
+
+%install
+
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/%{_initddir}
+
+rake install PARAMS_FILE= DESTDIR=$RPM_BUILD_ROOT
+
+mkdir -p $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}
+mkdir -p $RPM_BUILD_ROOT/%{_rundir}/%{name}
+touch  $RPM_BUILD_ROOT/%{_localstatedir}/log/%{name}/%{name}.log
+
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%pre
+# Here we'll do a little bit of cleanup just in case something went horribly
+# awry during a previous install/uninstall:
+if [ -f "<%= @install_dir %>/start_service_after_upgrade" ] ; then
+   rm <%= @install_dir %>/start_service_after_upgrade
+fi
+# If this is an upgrade (as opposed to an install) then we need to check
+#  and see if the service is running.  If it is, we need to stop it.
+#  we want to shut down and disable the service.
+if [ "$1" = "2" ] ; then
+    if /sbin/service %{name} status > /dev/null ; then
+        # If we need to restart the service after the upgrade
+        #  is finished, we will touch a temp file so that
+        #  we can detect that state
+        touch <%= @install_dir %>/start_service_after_upgrade
+        /sbin/service %{name} stop >/dev/null 2>&1
+    fi
+fi
+# Add Dujour user
+getent group %{name} > /dev/null || groupadd -r %{name}
+getent passwd %{name} > /dev/null || \
+useradd -r -g %{name} -d <%= @install_dir %> -s /sbin/nologin \
+     -c "Dujour daemon"  %{name}
+
+%post
+# If this is an install (as opposed to an upgrade)...
+if [ "$1" = "1" ]; then
+  # Register the dujour service
+  /sbin/chkconfig --add %{name}
+fi
+
+<%= ERB.new(File.read("ext/templates/directory_perms.erb")).result %>
+
+
+%preun
+# If this is an uninstall (as opposed to an upgrade) then
+#  we want to shut down and disable the service.
+if [ "$1" = "0" ] ; then
+    /sbin/service %{name} stop >/dev/null 2>&1
+    /sbin/chkconfig --del %{name}
+fi
+
+%postun
+# Remove the rundir if this is an uninstall (as opposed to an upgrade)...
+if [ "$1" = "0" ]; then
+    rm -rf %{_rundir}/%{name} || :
+fi
+
+# If this is an upgrade (as opposed to an install) then we need to check
+#  and see if we stopped the service during the install (we indicate
+#  this via the existence of a temp file that was created during that
+#  phase).  If we did, then we need to restart it.
+if [ "$1" = "1" ] ; then
+    if [ -f "<%= @install_dir %>/start_service_after_upgrade" ] ; then
+        rm <%= @install_dir %>/start_service_after_upgrade
+        /sbin/service %{name} start >/dev/null 2>&1
+    fi
+fi
+
+
+%files
+%defattr(-, root, root)
+%doc *.md
+%doc documentation
+%config(noreplace)%{_sysconfdir}/%{realname}/config.clj
+%config(noreplace)%{_sysconfdir}/%{realname}/log4j.properties
+%config(noreplace)%{_realsysconfdir}/sysconfig/%{name}
+%{_datadir}/%{realname}
+%{_initddir}/%{name}
+%{_sharedstatedir}/%{realname}
+%dir %{_localstatedir}/log/%{name}
+%ghost %{_localstatedir}/log/%{name}/%{name}.log
+%ghost %{_rundir}/%{name}
+
+
+%changelog
+<%
+hostname = `hostname --fqdn`
+dt=`date +"%a %b %d %Y"`
+-%>
+* <%= dt.strip -%> <%= ENV['USER'] -%> <<%= ENV['USER'].strip -%>@<%= hostname.strip -%>> - <%= @rpmversion %>-<%= @rpmrelease -%>
+- Autobuild from Rake task
+
+* Mon Apr 02 2012 Michael Stahnke <stahnma@puppetlabs.com> - 0.1.0-1
+- Initial Packaging
