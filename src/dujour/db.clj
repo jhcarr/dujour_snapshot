@@ -14,7 +14,7 @@
   to allow introspection on the database.  (Some of our unit tests rely on this.)"
   [database]
   (let [sql-query (sql/select [:table_name] {:information_schema.tables :i}
-                              ;; Do we need a "WHERE" in here?
+                              ;; "WHERE" clause
                               ["LOWER(i.table_schema) = 'public'"])
         results (jdbc/query database sql-query)]
     (map :table_name results)))
@@ -75,7 +75,7 @@
   [database product]
   {:pre [(map? database)
          (string? product)]
-   :post [(map? %)]}
+   :post [(or (nil? %) (map? %))]}
   (let [sql-query (sql/select [:version :message :link :product]
                               :releases (sql/where {:releases.product product})
                               (sql/order-by {:releases.release_date :desc}))

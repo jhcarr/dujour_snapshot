@@ -92,7 +92,7 @@
       (-> (rr/response "No product and/or version parameters in query, yo")
           (rr/status 400))
 
-      (not (db/product? database product))
+      (not (db/is-product? database product))
       (-> (rr/response (clojure.core/format  "%s is not a Puppet Labs product, yo" product))
           (rr/status 404))
 

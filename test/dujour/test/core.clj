@@ -11,11 +11,9 @@
         [clojure.string :only (join)]
         [clj-time.core :only (now)]
         [clj-time.coerce :only (to-timestamp)]
-        [clojure.walk]))
+        [clojure.walk :only (keywordize-keys)]))
 
 (use-fixtures :each with-test-database with-test-default-releases)
-
-
 
 (deftest test-make-response
   (let [product "puppetdb"
@@ -39,16 +37,10 @@
              (make-response *db* product version "txt"))))))
 
 (deftest test-format-checkin
-  (let [x-real-ip-option {:params {"product" "HAL9000"
-                                   "version" "1.0.0"
-                                   "fmt" "json"
-                                   "foo" "bar"}
+  (let [x-real-ip-option {:params {"product" "HAL9000" "version" "1.0.0" "fmt" "json" "foo" "bar"}
                           :headers {"x-real-ip" "255.255.255.255"}
                           :fmt "json"}
-        remote-addr-option {:params {"product" "GLaDOS"
-                                     "version" "1.0.0"
-                                     "fmt" "txt"
-                                     "foo" "baz"}
+        remote-addr-option {:params {"product" "GLaDOS" "version" "1.0.0" "fmt" "txt" "foo" "baz"}
                             :remote-addr "100.100.100.100"}
         t1 (to-timestamp (now))]
     (testing "Tests format-checkin with x-real-ip option"
@@ -61,11 +53,11 @@
 (deftest test-dump-req-and-resp
   (let [success-app (fn [param] {:status 200})
         fail-app (fn [param] {:status 400})
-        req {:params {"product" "puppetdb"
-                      "version" "1.0.1"
-                      "foo" "bar"}
+        req {:params {"product" "puppetdb" "version" "1.0.1" "foo" "bar"}
              :headers {"x-real-ip" "255.255.255.255"}
-             :fmt "json"}]
+             :fmt "json"}
+        keyworded-req (keywordize-keys req)
+        ]
 
     (testing "tests dump-req-and-resp with invalid app"
       ((dump-req-and-resp *db* fail-app) req)
@@ -73,14 +65,8 @@
 
     (testing "Tests dump-req-and-resp with valid app"
       ((dump-req-and-resp *db* success-app) req)
-      (is (= (-> req
-                 (:params)
-                 (keywordize-keys)
-                 (dissoc :foo)
-                 (assoc :ip (-> req
-                                (keywordize-keys)
-                                (:headers)
-                                (:x-real-ip))))
+      (is (= (-> (dissoc (:params keyworded-req) :foo)
+                 (assoc :ip (:x-real-ip (:headers keyworded-req))))
              (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp :checkin_id))))))
 
 (deftest test-version-app
@@ -111,7 +97,7 @@
 
     (testing "Tests make-webapp with a valid request."
       ((make-webapp *db*) success-req)
-      (let [req (keywordize-keys (success-req))]
-        (is (= (-> (dissoc :foo (:params req))
-                   (assoc :ip (:x-real-ip (:headers req))))
+      (let [req (keywordize-keys success-req)
+            params (dissoc (:params req) :foo)]
+        (is (= (assoc params :ip (:x-real-ip (:headers req)))
                (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp :checkin_id)))))))

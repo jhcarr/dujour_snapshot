@@ -37,4 +37,5 @@
                                  :version version
                                  :release_date release_date
                                  :link link
-                                 :message message}))))
+                                 :message message})))
+  (function))
