@@ -1,18 +1,20 @@
 (ns dujour.core
-  (:import [java.util UUID]
-           [java.util.zip GZIPOutputStream])
   (:require [ring.util.response :as rr]
             [cheshire.core :as json]
-            [fs.core :as fs])
+            [fs.core :as fs]
+            [dujour.jdbc :as dj-jdbc]
+            [dujour.db :as db])
   (:use [ring.adapter.jetty :only (run-jetty)]
         [ring.middleware.params :only (wrap-params)]
         [ring-geoipviz.core :only (wrap-with-geoip wrap-with-buffer)]
         [clojure.tools.nrepl.server :only (start-server)]
         [clojure.string :only (join)]
+        [clojure.walk :only (stringify-keys)]
         [clj-semver.core :only (newer?)]
+        [dujour.migrations :only (migrate-db!)]
         [clj-time.core :only (now)]
-        [clj-time.format :only (formatters unparse)]
-        [clojure.java.io :only (output-stream)])
+        [clj-time.coerce :only (to-timestamp)]
+        )
   (:gen-class))
 
 
@@ -28,12 +30,18 @@
 
 (defn make-response
   "Build response comparing client's version to latest available"
-  [version-info product client-version fmt]
-  {:pre  [(string? product)
-          (string? client-version)]
+  [database product version fmt]
+  {:pre  [(map? database)
+          (string? product)
+          (string? version)
+          (string? fmt)]
    :post [(map? %)]}
   (try
-    (let [response-map (assoc version-info :newer (newer? (:version version-info) client-version))
+    (let [version-info (db/get-release database product)
+          response-map
+          (->> (assoc version-info :newer (newer? (:version version-info) version))
+               (remove (comp nil? val))
+               (into {}))
           resp (condp = fmt
                  "json"
                  (json/generate-string response-map)
@@ -44,51 +52,60 @@
       (rr/response resp))
     (catch IllegalArgumentException msg
       (-> (rr/response
-            (clojure.core/format "%s is not a valid semantic version number, yo" client-version))
+            (clojure.core/format "%s is not a valid semantic version number, yo" version))
           (rr/status 400)))))
+
+(defn format-checkin
+  [{:keys [params headers remote-addr]} timestamp]
+  {:pre [(map? params)
+         (params "product")
+         (params "version")]
+   :post [(map? %)]}
+  (let [{:strs [product version]} params
+        {:strs [x-real-ip]} headers
+        ip (or x-real-ip remote-addr)
+        other-params (dissoc params "fmt" "product" "version")
+        ]
+    {"product" product "version" version "timestamp" timestamp "ip" ip "params" other-params}))
 
 (defn dump-req-and-resp
   "Ring middleware that dumps successfull (200) requests to a
-  directory on disk, one gzipped file per request."
-  [dump-dir app]
+  database."
+  [database app]
+  {:pre [(map? database)
+         (ifn? app)]
+   :post [(ifn? %)]}
   (fn [req]
     (let [resp     (app req)
-          payload  {:request   (dissoc req :body :ssl-client-cert)
-                    ;; ^^ certain attributes of the response can't be
-                    ;; serialized to JSON, like OutputStreams and such
-                    :timestamp (System/currentTimeMillis)
-                    :response  resp}
-          datestr  (unparse (formatters :year-month-day) (now))
-          filename (str (UUID/randomUUID) ".gz")
-          path     (fs/file dump-dir datestr filename)
-          output   (json/generate-string payload)]
+          output  (format-checkin req (now))]
       (when (= (:status resp) 200)
-        (fs/mkdirs (fs/parent path))
-        (spit (GZIPOutputStream. (output-stream path)) output))
+        (db/dump-req database output))
       resp)))
 
 (defn version-app
   "Checks for the correct query string parameters
   and responds to version requests."
-  [latest-version {:keys [params] :as request}]
-  (let [{:strs [product version format] :or {format "json"}} params
-        latest-version-info (latest-version product)]
+  [database {:keys [params] :as request}]
+  (let [{:strs [product version format] :or {format "json"}} params]
     (cond
       (not (and product version))
       (-> (rr/response "No product and/or version parameters in query, yo")
           (rr/status 400))
 
-      (not latest-version-info)
-      (-> (rr/response (clojure.core/format "Unknown product %s, yo" product))
+      (not (db/is-product? database product))
+      (-> (rr/response (clojure.core/format  "%s is not a Puppet Labs product, yo" product))
           (rr/status 404))
 
       :else
-      (make-response latest-version-info product version format))))
+      (make-response database product version format))))
 
 (defn make-webapp
-  [{:keys [dump-dir latest-version] :as config}]
-  (let [app #(version-app latest-version %)]
-  (-> (dump-req-and-resp dump-dir app)
+  [database]
+  {:pre [(map? database)]
+   :post [(ifn? %)]}
+  (let [db (dj-jdbc/pooled-datasource database)
+        app #(version-app db %)]
+    (-> (dump-req-and-resp db app)
       (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
       (wrap-with-geoip [:headers "x-real-ip"])
       (wrap-params))))
@@ -102,6 +119,8 @@
 
   (let [defaults {:host "localhost" :port 9990 :nrepl-port 9991}
         config (merge defaults
-                     (guarded-load-file (first args)))
-        nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")]
-    (run-jetty (make-webapp config) config)))
+                      (guarded-load-file (first args)))
+        nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")
+        {:keys [database]} config]
+    (migrate-db! database)
+    (run-jetty (make-webapp database) config)))

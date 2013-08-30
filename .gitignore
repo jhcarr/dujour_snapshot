@@ -7,3 +7,7 @@
 /checkouts
 /.lein-deps-sum
 /target
+*.swp
+*.swo
+/.lein-repl-history
+/.gitignore
