@@ -17,7 +17,7 @@ task :package => [ :clobber, JAR_FILE, :template  ] do
   temp = `mktemp -d -t tmpXXXXXX`.strip
   workdir = File.join(temp, "#{@name}-#{@version}")
   mkdir_p workdir
-  FileList[ "tasks", "ext", "*.md", JAR_FILE, "documentation", "Rakefile" ].each do |f|
+  FileList[ "tasks", "ext", "*.md", JAR_FILE, "Rakefile" ].each do |f|
     sh "cp -pr #{f} #{workdir}"
   end
 

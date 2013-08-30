@@ -17,7 +17,7 @@ install::
 	echo $(BUILD_ROOT)
 	mkdir -p $(BUILD_ROOT)
 	rake install PARAMS_FILE= DESTDIR=$(BUILD_ROOT)
-	dh_installdocs -p dujour documentation
+	dh_installdocs -p dujour
 
 binary-indep: build install
 	dh_testdir

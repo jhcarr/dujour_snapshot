@@ -7,7 +7,7 @@ summary: 'Puppet Labs version-checking backend daemon'
 description: 'Puppet Labs version-checking backend'
 version_file: 'version'
 # files and gem_files are space separated lists
-files: 'ext *.md dujour.jar version documentation Rakefile'
+files: 'ext *.md dujour.jar version Rakefile'
 tar_excludes: '.gitignore'
 gem_files:
 gem_require_path:
