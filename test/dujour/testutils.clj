@@ -50,6 +50,5 @@
   that exist within it.  Expects to be called from within a db binding.  You
   Exercise extreme caution when calling this function!"
   [database]
-  (jdbc/db-transaction [conn database]
-    (doseq [table-name (sql-database-table-names conn)]
-      (jdbc/db-do-commands conn true ["DROP TABLE IF EXISTS ? CASCADE" table-name]))))
+  (let [drop-stmts (map #(format "DROP TABLE IF EXISTS %s CASCADE" %) (sql-database-table-names database))]
+    (apply jdbc/db-do-commands database true drop-stmts)))
