@@ -103,9 +103,8 @@
   [database]
   {:pre [(map? database)]
    :post [(ifn? %)]}
-  (let [db (dj-jdbc/pooled-datasource database)
-        app #(version-app db %)]
-    (-> (dump-req-and-resp db app)
+  (let [app #(version-app database %)]
+    (-> (dump-req-and-resp database app)
       (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
       (wrap-with-geoip [:headers "x-real-ip"])
       (wrap-params))))
@@ -121,6 +120,7 @@
         config (merge defaults
                       (guarded-load-file (first args)))
         nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")
-        {:keys [database]} config]
-    (migrate-db! database)
-    (run-jetty (make-webapp database) config)))
+        {:keys [database]} config
+        db (dj-jdbc/pooled-datasource database)]
+    (migrate-db! db)
+    (run-jetty (make-webapp db) config)))
