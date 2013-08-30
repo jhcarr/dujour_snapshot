@@ -77,7 +77,7 @@
    :post [(ifn? %)]}
   (fn [req]
     (let [resp     (app req)
-          output  (format-checkin req (to-timestamp (now)))]
+          output  (format-checkin req (now))]
       (when (= (:status resp) 200)
         (db/dump-req database output))
       resp)))

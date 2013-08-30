@@ -60,7 +60,7 @@
   (when-not (is-user? database ip)
     (jdbc/insert! database :users {:ip ip})))
 
-(defn product?
+(defn is-product?
   "Checks the dujour database for whether a given product has
   an entry in the products table."
   [database product]
@@ -80,8 +80,7 @@
                               :releases (sql/where {:releases.product product})
                               (sql/order-by {:releases.release_date :desc}))
         release-info (first (jdbc/query database sql-query))]
-    ;; Still necessary since we do the same thing in core?
-    (into {} (remove (comp nil? val) release-info))))
+    release-info))
 
 (defn dump-req
   "Inserts a formatted dujour request into a PostgreSQL table"
@@ -97,7 +96,7 @@
       (make-release! conn product version)
       (make-user! conn ip)
       (let [checkin_id
-            (:checkin_id (first (jdbc/insert! conn :checkins {:timestamp timestamp
+            (:checkin_id (first (jdbc/insert! conn :checkins {:timestamp (to-timestamp timestamp)
                                                               :ip ip
                                                               :product product
                                                               :version version})))]
