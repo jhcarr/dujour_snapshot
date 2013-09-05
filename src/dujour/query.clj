@@ -19,7 +19,6 @@
 
 (defn product-query
   [database product & prods]
-  (let [sql-and-params (map #())])
   [(format "SELECT product, version, checkin_date, ip
            FROM (%s) pq1
            WHERE product = ?"

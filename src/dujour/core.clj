@@ -76,10 +76,9 @@
          (ifn? app)]
    :post [(ifn? %)]}
   (fn [req]
-    (let [resp     (app req)
-          output  (format-checkin req (now))]
+    (let [resp (app req)]
       (when (= (:status resp) 200)
-        (db/dump-req database output))
+        (db/dump-req database (format-checkin req (now))))
       resp)))
 
 (defn version-app
@@ -122,5 +121,5 @@
         nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")
         {:keys [database]} config
         db (dj-jdbc/pooled-datasource database)]
-    (migrate-db! db)
+    (migrate-db! database)
     (run-jetty (make-webapp db) config)))
