@@ -76,10 +76,9 @@
          (ifn? app)]
    :post [(ifn? %)]}
   (fn [req]
-    (let [resp     (app req)
-          output  (format-checkin req (now))]
+    (let [resp (app req)]
       (when (= (:status resp) 200)
-        (db/dump-req database output))
+        (db/dump-req database (format-checkin req (now))))
       resp)))
 
 (defn version-app
@@ -121,6 +120,7 @@
                       (guarded-load-file (first args)))
         nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")
         {:keys [database]} config
-        db (dj-jdbc/pooled-datasource database)]
+        ;; Add a database type to connection mappings to use the correct SQL
+        db (assoc (dj-jdbc/pooled-datasource database) :db-type (:subprotocol database))]
     (migrate-db! db)
     (run-jetty (make-webapp db) config)))
