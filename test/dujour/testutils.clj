@@ -32,7 +32,7 @@
       (catch java.io.FileNotFoundException ex
           (load "/config/default")))
     {
-      :testdb-config-fn test-db-config
+     :testdb-config-fn test-db-config
     }))
 
 ;; Memoize the loading of the test config file so that we don't have to

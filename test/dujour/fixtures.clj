@@ -11,7 +11,7 @@
 
 (defn with-test-database
   [function]
-  (binding [*db* (test-db)]
+  (binding [*db* (assoc (test-db) :db-type (:subprotocol (test-db)))]
     (clear-db-for-testing! *db*)
     (migrate-db! *db*)
     (function)))
