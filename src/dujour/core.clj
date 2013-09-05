@@ -120,7 +120,7 @@
                       (guarded-load-file (first args)))
         nrepl-server (start-server :port (:nrepl-port config) :bind "localhost")
         {:keys [database]} config
+        ;; Add a database type to connection mappings to use the correct SQL
         db (assoc (dj-jdbc/pooled-datasource database) :db-type (:subprotocol database))]
-    ;; Don't use connection pool
     (migrate-db! db)
     (run-jetty (make-webapp db) config)))

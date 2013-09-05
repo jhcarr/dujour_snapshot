@@ -11,10 +11,11 @@
 
 (defn with-test-database
   [function]
-  (binding [*db* (assoc (test-db) :db-type (:subprotocol (test-db)))]
+  (let [db (test-db)]
+    (binding [*db* (assoc db :db-type (:subprotocol db))]
     (clear-db-for-testing! *db*)
     (migrate-db! *db*)
-    (function)))
+    (function))))
 
 
 (defn with-test-default-releases
