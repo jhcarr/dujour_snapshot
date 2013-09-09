@@ -16,6 +16,7 @@ task :install => [  JAR_FILE  ] do
   mkdir_p "#{DESTDIR}/#{@log_dir}"
   mkdir_p "#{DESTDIR}/etc/init.d/"
   mkdir_p "#{DESTDIR}/#{@lib_dir}"
+  mkdir_p "#{DESTDIR}/#{@lib_dir}/db"
   mkdir_p "#{DESTDIR}/#{@etc_dir}"
   ln_sf @log_dir, "#{DESTDIR}/#{@install_dir}/log"
 
