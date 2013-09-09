@@ -1,5 +1,7 @@
 #!/bin/bash
 
+<%= ERB.new(File.read("ext/templates/directory_perms.erb")).result %>
+
 set -e
 if [ -x "/etc/init.d/<%= @name -%>}" ]; then
     if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
