@@ -5,9 +5,9 @@
   (:gen-class))
 
 (defn user-query
-  [{:keys [subprotocol] :as database}]
+  [{:keys [db-type] :as database}]
   (let [date-fn-sql
-        (case subprotocol
+        (case db-type
           "postgresql" "date(timestamp)"
           "hsqldb" "TO_DATE(timestamp, 'YYYY-MM-DD')")]
     (format "SELECT DISTINCT c.product, c.version, %s AS checkin_date, ip
