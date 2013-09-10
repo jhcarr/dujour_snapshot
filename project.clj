@@ -16,8 +16,7 @@
 
 (defproject dujour (version-string)
   :description "Version checking backend for Puppet Labs projects."
-  :plugins  [[ragtime/ragtime.lein "0.3.3"]
-             [lein-ring "0.8.5"]]
+  :plugins  [[ragtime/ragtime.lein "0.3.3"]]
   :dependencies [[org.clojure/clojure "1.5.1"]
                  ;; Routing Library
                  [compojure "1.1.5"]
@@ -45,10 +44,8 @@
                  [ragtime "0.3.3"]]
   :ragtime {:migrations ragtime.sql.files/migrations
             :database "jdbc:postgresql://localhost:5432/dujourdb"}
-  :ring {:handler dujour.controllers.handler/app :port 4000}
   :profiles {:dev {:resource-paths ["test-resources"]
                    :dependencies [[ring-mock "0.1.5"]]}}
   :aot [dujour.core]
   :main dujour.core
 )
-

@@ -1,6 +1,9 @@
 (ns dujour.core
   (:require [ring.util.response :as rr]
             [cheshire.core :as json]
+            [compojure.core :refer :all]
+            [compojure.handler :as handler]
+            [compojure.route :as route]
             [fs.core :as fs]
             [dujour.jdbc :as dj-jdbc]
             [dujour.db :as db])
@@ -12,6 +15,7 @@
         [clojure.walk :only (stringify-keys)]
         [clj-semver.core :only (newer?)]
         [dujour.migrations :only (migrate-db!)]
+        [dujour.controllers.handler :only (query-app)]
         [clj-time.core :only (now)]
         [clj-time.coerce :only (to-timestamp)]
         )
@@ -81,7 +85,7 @@
         (db/dump-req database (format-checkin req (now))))
       resp)))
 
-(defn version-app
+(defn process-request
   "Checks for the correct query string parameters
   and responds to version requests."
   [database {:keys [params] :as request}]
@@ -98,12 +102,19 @@
       :else
       (make-response database product version format))))
 
+(defn version-app
+  [database]
+  (routes (GET "/" [:as request] (process-request database request))))
+
 (defn make-webapp
   [database]
   {:pre [(map? database)]
    :post [(ifn? %)]}
-  (let [app #(version-app database %)]
-    (-> (dump-req-and-resp database app)
+  (let [versions (dump-req-and-resp database (version-app database))
+        query (query-app database)
+        app (routes (context "/" [] versions)
+                    (context "/query" [] query))]
+    (-> app
       (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
       (wrap-with-geoip [:headers "x-real-ip"])
       (wrap-params))))
