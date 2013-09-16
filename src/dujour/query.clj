@@ -15,7 +15,7 @@
             JOIN releases r ON (c.product, c.version) = (r.product, r.version)
             JOIN params p ON c.checkin_id = p.checkin_id
             WHERE r.release_date IS NOT NULL"
-            date-fn-sql date-fn-sql)))
+            date-fn-sql)))
 
 (defn product-query
   [database product & prods]
