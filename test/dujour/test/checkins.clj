@@ -79,11 +79,11 @@
              (= 404))))
 
    (testing "testing with valid request, expecting status 200 and database write"
-     (checkins-app *db* success-req)
+     (is (= 200 (:status (checkins-app *db* success-req))) "expecting status 200")
      (is (= (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp)
             {:ip "2.2.2.2",             
              :version "1.0.0",
              :product "puppetdb",
-             :checkin_id 1}))
+             :checkin_id 1}) "expecting matching row from database query")
      )
    ))
