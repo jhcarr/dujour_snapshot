@@ -66,6 +66,7 @@
           (rr/status 404))
 
       :else
-      (when (= (:status (make-response database product version format)) 200)
-        (make-response database product version format)
-        (db/dump-req database (format-checkin request (now)))))))
+      (let [resp (make-response database product version format)]
+        (when (= 200 (:status resp))
+          (db/dump-req database (format-checkin request (now))))
+        resp))))
