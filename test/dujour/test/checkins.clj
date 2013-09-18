@@ -51,21 +51,39 @@
       (is (= {"product" "GLaDOS" "version" "1.0.0" "timestamp" (to-timestamp (now)) "ip" "100.100.100.100" "params" {"foo" "baz"}}
              (format-checkin remote-addr-option (to-timestamp (now))))))))
 
-(deftest test-dump-req-and-resp
-  (let [success-app (fn [param] {:status 200})
-        fail-app (fn [param] {:status 400})
-        req {:params {"product" "puppetdb" "version" "1.0.1" "foo" "bar"}
-             :headers {"x-real-ip" "255.255.255.255"}
-             :fmt "json"}
-        keyworded-req (keywordize-keys req)
-        ]
 
-    (testing "tests dump-req-and-resp with invalid app"
-      ((dump-req-and-resp *db* fail-app) req)
-      (is (empty? (jdbc/query *db* (sql/select * :checkins)))))
+(deftest test-checkins-app
+  (let [empty-product {:params {"version" "1.0.0"}
+                       :headers {"x-real-ip" "0.0.0.0"}
+                       :fmt "json"}
+        empty-version {:params {"product" "BASS.EXE"}
+                       :headers {"x-real-ip" "0.0.0.0"}
+                       :fmt "json"}
+        invalid-req {:params {"product" "CYLON" "version" "1.0.0" "fmt" "json" "foo" "bar"}
+                     :headers {"x-real-ip" "1.1.1.1"}
+                     :fmt "json"}
+        success-req {:params {"product" "puppetdb" "version" "1.0.0" "fmt" "json" "baz" "buz"}
+                     :headers {"x-real-ip" "2.2.2.2"}
+                     :fmt "json"}]
+   (testing "testing with empty request fields, expecting status 400 response"    
+     (is (-> (checkins-app *db* empty-product)
+             (:status)
+             (= 400)) "empty product :: status 400")
+     (is (-> (checkins-app *db* empty-version)
+             (:status)
+             (= 400)) "empty version :: status 400"))
 
-    (testing "Tests dump-req-and-resp with valid app"
-      ((dump-req-and-resp *db* success-app) req)
-      (is (= (-> (dissoc (:params keyworded-req) :foo)
-                 (assoc :ip (:x-real-ip (:headers keyworded-req))))
-             (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp :checkin_id))))))
+   (testing "testing with invalid request, expecting status 404 response"
+     (is (-> (checkins-app *db* invalid-req)
+             (:status)
+             (= 404))))
+
+   (testing "testing with valid request, expecting status 200 and database write"
+     (checkins-app *db* success-req)
+     (is (= (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp)
+            {:ip "2.2.2.2",             
+             :version "1.0.0",
+             :product "puppetdb",
+             :checkin_id 1}))
+     )
+   ))

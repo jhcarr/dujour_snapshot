@@ -17,20 +17,14 @@
 (use-fixtures :each with-test-database with-test-default-releases)
 
 (deftest test-make-webapp
-  (let [fail-req {:params {"product" "SKYNET" "version" "6.6.6" "foo" "bar"}
-                  :headers {"x-real-ip" "0.0.0.0"}
-                  :fmt "json"}
-        success-req {:params {"product" "puppetdb" "version" "1.0.1"}
-                     :headers {"x-real-ip" "255.255.255.255"}
-                     :fmt "json"}]
+    (testing "testing make-webapp with an invalid checkin request to make sure that make-webapp is correctly routing to checkins namespace, expecting status 404"
+      (let [req (request :get "/" {"product" "Metallo"})]
+        (is (-> ((make-webapp *db*) )
+               (:status)
+               (= 404)) "invalid product information :: 404"))))
 
-    (testing "Tests make-webapp with an invalid request."
-      ((make-webapp *db*) (header (request :get "/" (:params fail-req)) "x-real-ip" "0.0.0.0"))
-      (is (empty? (jdbc/query *db* (sql/select * :checkins)))))
-
-    (testing "Tests make-webapp with a valid request."
-      ((make-webapp *db*) success-req)
-      (let [req (keywordize-keys success-req)
-            params (dissoc (:params req) :foo)]
-        (is (= (assoc params :ip (:x-real-ip (:headers req)))
-               (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp :checkin_id)))))))
+    (testing "testing make-webapp with a valid \"/query\" request to make sure make-webapp is correctly routing to query namespace, expecting valid sql output."
+      (let [query (sql/select * :checkins)
+            req (request :get "/query/product/pe-master")]
+        (is (= ((make-webapp *db*) req)
+               (jdbc/query query)) "Both queries should return empty sets." )))

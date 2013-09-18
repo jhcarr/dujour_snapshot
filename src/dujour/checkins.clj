@@ -19,6 +19,7 @@
           (string? version)
           (string? fmt)]
    :post [(map? %)]}
+  ;; This try-catch logic should move to checkins-app
   (try
     (let [version-info (db/get-release database product)
           response-map
@@ -26,13 +27,14 @@
                (remove (comp nil? val))
                (into {}))
           resp (condp = fmt
+                 ;; break into helper function for formatting
                  "json"
                  (json/generate-string response-map)
 
                  "txt"
                  (join "\n" (for [[k v] response-map] (format "%s=%s" (name k) v))))
           ]
-      (rr/response resp))
+      (rr/status (rr/response resp) 200))
     (catch IllegalArgumentException msg
       (-> (rr/response
             (clojure.core/format "%s is not a valid semantic version number, yo" version))
@@ -51,19 +53,6 @@
         ]
     {"product" product "version" version "timestamp" timestamp "ip" ip "params" other-params}))
 
-(defn dump-req-and-resp
-  "Ring middleware that dumps successfull (200) requests to a
-  database."
-  [database app]
-  {:pre [(map? database)
-         (ifn? app)]
-   :post [(ifn? %)]}
-  (fn [req]
-    (let [resp (app req)]
-      (when (= (:status resp) 200)
-        (db/dump-req database (format-checkin req (now))))
-      resp)))
-
 (defn checkins-app
   "Checks for the correct query string parameters
   and responds to version requests."
@@ -79,4 +68,7 @@
           (rr/status 404))
 
       :else
-      (dump-req-and-resp database (make-response database product version format)))))
+      ;; Move content from lines 65-68
+      (when (= (:status (make-response database product version format)) 200)
+        (make-response database product version format)
+        (db/dump-req database (format-checkin request (now)))))))
