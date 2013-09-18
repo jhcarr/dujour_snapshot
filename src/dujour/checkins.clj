@@ -19,7 +19,6 @@
           (string? version)
           (string? fmt)]
    :post [(map? %)]}
-  ;; This try-catch logic should move to checkins-app
   (try
     (let [version-info (db/get-release database product)
           response-map
@@ -27,7 +26,6 @@
                (remove (comp nil? val))
                (into {}))
           resp (condp = fmt
-                 ;; break into helper function for formatting
                  "json"
                  (json/generate-string response-map)
 
@@ -68,7 +66,6 @@
           (rr/status 404))
 
       :else
-      ;; Move content from lines 65-68
       (when (= (:status (make-response database product version format)) 200)
         (make-response database product version format)
         (db/dump-req database (format-checkin request (now)))))))
