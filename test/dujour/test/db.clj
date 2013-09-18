@@ -10,36 +10,37 @@
 (use-fixtures :each with-test-database with-test-default-releases)
 
 (deftest test-sql-database-table-names
-  (testing
+  (testing "tests sql-database-table-names, expecting a list of all table names present in database"
       (is (= (frequencies (sql-database-table-names *db*)) (frequencies '("ragtime_migrations" "params" "users" "checkins" "products" "releases")) ))))
 
 (deftest test-is-release?
-  (testing "Tests is-release? function with empty strings."
+  (testing "tests is-release? function with empty strings, expecting false"
     (is (not (is-release? *db* "" ""))))
-  (testing "Tests is-release? function with invalid arguments."
+  (testing "tests is-release? function with invalid arguments, expecting false"
     (is (not (is-release? *db* "FOO" "BAR"))))
-  (testing "Tests is-release? function with valid argument."
+  (testing "tests is-release? function with valid argument, expecting true"
     (is (is-release? *db* "pe-master" "1.0.0"))))
 
 (deftest test-is-user?
-  (testing "Tests is-user? function with empty string."
+  (testing "tests is-user? function with empty string, expecting false"
     (is (not (is-user? *db* ""))))
-  (testing "Tests is-user? function with invalid argument."
+  (testing "tests is-user? function with invalid argument, expecting false"
     (is (not (is-user? *db* "This is a test!"))))
-  (testing "Tests is-user? function with valid argument."
+  (testing "tests is-user? function with valid argument, expecting true"
     (jdbc/insert! *db* :users {:ip "1.2.3.4"})
     (is (is-user? *db* "1.2.3.4"))
     (jdbc/delete! *db* :users (sql/where {:ip "1.2.3.4"}))))
 
 (deftest test-make-release!
-  (testing "Tests make-release! with new product and version data."
+  (testing "tests make-release! with new product and version data, querying releases table should return exactly one row containing this data"
     (make-release! *db* "puppetdb" "4.3.2")
     (let [release-query (sql/select '(:product :version) {:releases :r}
                                     (sql/where {:r.product "puppetdb"
                                                 :r.version "4.3.2"}))
           release (jdbc/query *db* release-query)]
       (is (= 1 (count release)))))
-  (testing "Tests make-release! with old product and version data."
+  (testing "tests make-release! with old product and version data, querying releases table should return exactly one row containing this data"
+    (make-release! *db* "puppetdb" "1.0.0")
     (make-release! *db* "puppetdb" "1.0.0")
     (let [release-query (sql/select '(:product :version) {:releases :r}
                                     (sql/where {:r.product "puppetdb"
@@ -48,13 +49,13 @@
       (is (= 1 (count release))))))
 
 (deftest test-make-user!
-  (testing "Tests make-user! with new ip address."
+  (testing "tests make-user! with new ip address, querying users table should return exactly one row containing the test data."
     (make-user! *db* "255.0.255.0")
     (let [user-query (sql/select * :users
                                  (sql/where {:ip "255.0.255.0"}))
           user (jdbc/query *db* user-query)]
       (is (= 1 (count user)))))
-  (testing "Tests make-user! with old ip address (taken from the test immidiately before)."
+  (testing "tests make-user! with old ip address, querying users table should return exactly one row containing the test data."
     (make-user! *db* "255.0.255.0")
     (make-user! *db* "255.0.255.0")
     (let [user-query (sql/select * :users
@@ -64,22 +65,22 @@
   )
 
 (deftest test-is-product?
-  (testing "Tests is-product? function with empty string."
+  (testing "tests is-product? function with empty string, expecting false"
     (is (not (is-product? *db* ""))))
-  (testing "Tests is-product? function with invalid argument."
+  (testing "tests is-product? function with invalid argument, expecting false"
     (is (not (is-product? *db* "This is a test!"))))
-  (testing "Tests is-product? function with valid argument."
+  (testing "tests is-product? function with valid argument, expecting true"
     (is (is-product? *db* "puppetdb"))))
 
 (deftest test-get-release
   (let [pe-agent {:product "pe-agent" :version "1.0.0"
                   :link "http://www.puppetlabs.com"
                   :message "Message, that is I!"}]
-    (testing "Tests get-release with empty string."
+    (testing "tests get-release with empty string, expecting empty collection"
       (is (empty? (get-release *db* ""))))
-    (testing "Tests get-release with invalid argument."
+    (testing "tests get-release with invalid argument, expecting empty collection"
       (is (empty? (get-release *db* "This is a test!"))))
-    (testing "Tests get-release with valid argument"
+    (testing "tests get-release with valid argument, expecting a single row from releases table"
       (is (= pe-agent (get-release *db* "pe-agent"))))))
 
 (deftest test-dump-req
@@ -103,7 +104,7 @@
         req1 {"product" "puppetdb" "version" "6.6.6" "ip" "24.8.63.199" "timestamp" (to-timestamp (now)) "params" {} }
         req2 {"product" "pe-master" "version" "3.0.0" "ip" "24.8.63.199" "timestamp" (to-timestamp (now)) "params" {} }]
 
-    (testing "Tests dump-req with single req"
+    (testing "tests dump-req with single req, expecting query to return matching req data"
       (dump-req *db* req1)
       (is (= (req1 "timestamp")
              ((first (jdbc/query *db* (sql/select [:timestamp] :checkins))) :timestamp)))
@@ -114,7 +115,7 @@
       (is (= (req1 "version")
              ((first (jdbc/query *db* (sql/select [:version] :checkins))) :version))))
 
-    (testing "Tests dump-req with second req"
+    (testing "tests dump-req with second req, expecting query to return matching req data"
       (dump-req *db* req2)
       (is (= (req2 "timestamp")
              ((second (jdbc/query *db* (sql/select [:timestamp] :checkins))) :timestamp)))
