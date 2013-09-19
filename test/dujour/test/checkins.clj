@@ -16,6 +16,14 @@
 
 (use-fixtures :each with-test-database with-test-default-releases)
 
+(deftest test-format-response
+  (let [test-map {:foo "foo" :bar "bar"}]
+    (testing "tests format response with json and txt"
+      (is (= (format-response "json" test-map)
+             (json/generate-string test-map)) "expecting matching json output")
+      (is (= (format-response "txt" test-map)
+             "foo=foo\nbar=bar") "expecting matching text string output"))))
+
 (deftest test-make-response
   (let [product "puppetdb"
         version "1.0.1"
