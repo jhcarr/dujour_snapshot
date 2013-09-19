@@ -11,6 +11,16 @@
         [clj-time.coerce :only (to-timestamp)])
   (:gen-class))
 
+(defmulti format-response
+  (fn [fmt response-map] fmt))
+(defmethod format-response "json"
+  [fmt response-map]
+  (json/generate-string response-map))
+(defmethod format-response "txt"
+  [fmt response-map]
+  (join "\n" (for [[k v] response-map] (format "%s=%s" (name k) v)))
+  )
+
 (defn make-response
   "Build response comparing client's version to latest available"
   [database product version fmt]
@@ -21,16 +31,10 @@
    :post [(map? %)]}
   (try
     (let [version-info (db/get-release database product)
-          response-map
-          (->> (assoc version-info :newer (newer? (:version version-info) version))
-               (remove (comp nil? val))
-               (into {}))
-          resp (condp = fmt
-                 "json"
-                 (json/generate-string response-map)
-
-                 "txt"
-                 (join "\n" (for [[k v] response-map] (format "%s=%s" (name k) v))))
+          response-map (->> (assoc version-info :newer (newer? (:version version-info) version))
+                            (remove (comp nil? val))
+                            (into {}))
+          resp (format-response fmt response-map)
           ]
       (rr/status (rr/response resp) 200))
     (catch IllegalArgumentException msg
