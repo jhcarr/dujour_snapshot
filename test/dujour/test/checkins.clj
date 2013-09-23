@@ -88,10 +88,8 @@
 
    (testing "testing with valid request, expecting status 200 and database write"
      (is (= 200 (:status (checkins-app *db* success-req))) "expecting status 200")
-     (is (= (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp)
+     (is (= 1 (count (jdbc/query *db* (sql/select * :checkins)))) "expecting a single entry in the checkins table.")
+     (is (= (dissoc (first (jdbc/query *db* (sql/select * :checkins))) :timestamp :checkin_id)
             {:ip "2.2.2.2",             
              :version "1.0.0",
-             :product "puppetdb",
-             :checkin_id 1}) "expecting matching row from database query")
-     )
-   ))
+             :product "puppetdb"}) "expecting matching row from database query"))))

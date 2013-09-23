@@ -9,7 +9,7 @@
   (let [date-fn-sql
         (case db-type
           "postgresql" "date(timestamp)"
-          "hsqldb" "TO_DATE(timestamp, 'YYYY-MM-DD')")]
+          "hsqldb" "TO_CHAR( TIMESTAMP, 'YYYY-MM-DD')")]
     (format "SELECT DISTINCT c.product, c.version, %s AS checkin_date, ip
             FROM checkins c
             JOIN releases r ON (c.product, c.version) = (r.product, r.version)
