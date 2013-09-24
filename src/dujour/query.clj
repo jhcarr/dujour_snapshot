@@ -13,7 +13,7 @@
     (format "SELECT DISTINCT c.product, c.version, %s AS checkin_date, ip
             FROM checkins c
             JOIN releases r ON (c.product, c.version) = (r.product, r.version)
-            JOIN params p ON c.checkin_id = p.checkin_id
+            LEFT JOIN params p ON c.checkin_id = p.checkin_id
             WHERE r.release_date IS NOT NULL"
             date-fn-sql)))
 
