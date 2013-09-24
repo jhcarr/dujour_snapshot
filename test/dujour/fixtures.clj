@@ -3,6 +3,7 @@
             [clojure.java.jdbc.sql :as sql])
   (:use [dujour.db]
         [clj-time.coerce :only (to-timestamp)]
+        [clj-time.core :only (date-time)]
         [dujour.migrations]
         [dujour.testutils])
   (:use [clojure.test]))
@@ -25,13 +26,13 @@
                               (for [product ["pe-master" "pe-agent" "puppetdb"]] {:product product}))
                        (apply jdbc/insert! conn :releases
                               (for [[product version release_date link message]
-                                    [["pe-master" "1.0.0" (to-timestamp "January 1, 1991")
+                                    [["pe-master" "1.0.0" (to-timestamp (date-time 1991 1 1))
                                       "http://www.puppetlabs.com"
                                       "Message, I thought you meant massage!"]
-                                     ["pe-agent" "1.0.0" (to-timestamp "December 25, 1991")
+                                     ["pe-agent" "1.0.0" (to-timestamp (date-time 1991 12 25))
                                       "http://www.puppetlabs.com"
                                       "Message, that is I!"]
-                                     ["puppetdb" "1.0.0" (to-timestamp "February 20, 1991")
+                                     ["puppetdb" "1.0.0" (to-timestamp (date-time 1991 2 20))
                                       "http://www.puppetlabs.com"
                                       "Message, brought to you by Puppet Labs!"]]]
                                 {:product product
