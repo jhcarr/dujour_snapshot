@@ -20,6 +20,12 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  ;; Routing Library
                  [compojure "1.1.5"]
+                 ;; Templating for Cojure
+                 [enlive "1.1.1"]
+                 ;; HTML in Clojure
+                 [hiccup "1.0.4"]
+                 ;; HTML->Hiccup
+                 [hickory "0.4.1"]
                  ;; JSON encoding
                  [cheshire "5.2.0"]
                  [org.clojure/tools.nrepl "0.2.0-beta9"]
@@ -44,6 +50,7 @@
                  [ragtime "0.3.3"]]
   :ragtime {:migrations ragtime.sql.files/migrations
             :database "jdbc:postgresql://localhost:5432/dujourdb"}
+  :ring {:handler appetizer.controllers.handler/app}
   :profiles {:dev {:resource-paths ["test-resources"]
                    :dependencies [[ring-mock "0.1.5"]]}}
   :aot [dujour.core]
