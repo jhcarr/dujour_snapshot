@@ -11,7 +11,11 @@
 
 (deftest test-sql-database-table-names
   (testing "tests sql-database-table-names, expecting a list of all table names present in database"
-      (is (= (frequencies (sql-database-table-names *db*)) (frequencies '("ragtime_migrations" "params" "users" "checkins" "products" "releases")) ))))
+    (is (=
+         (frequencies (sql-database-table-names *db*))
+           (case (:db-type *db*)
+             "postgresql" (frequencies '("ragtime_migrations" "params" "users" "checkins" "products" "releases"))
+             "hsqldb" (frequencies '("RAGTIME_MIGRATIONS" "PARAMS" "USERS" "CHECKINS" "PRODUCTS" "RELEASES")))))))
 
 (deftest test-is-release?
   (testing "tests is-release? function with empty strings, expecting false"
