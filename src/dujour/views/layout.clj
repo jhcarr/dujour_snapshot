@@ -1,4 +1,4 @@
-(ns appetizer.views.layout
+(ns dujour.views.layout
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.java.jdbc.sql :as sql]
             [net.cgrand.enlive-html :as html]

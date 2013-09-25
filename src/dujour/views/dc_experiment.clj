@@ -1,11 +1,11 @@
-(ns appetizer.views.dc_experiment
+(ns dujour.views.dc_experiment
   (:require [hiccup.core :as html]
             [net.cgrand.enlive-html :as enlive]
             [clojure.java.jdbc :as jdbc]
             [clojure.java.jdbc.sql :as sql]
             [cheshire.core :as json])
   (:use [clojure.string :only (join)]
-        [appetizer.models.db :only (db)]))
+        [dujour.models.db :only (db)]))
 
 (defn get-unique-products
   [database]
@@ -26,12 +26,12 @@
 
 (defn make-dc-experiment []
   (enlive/emit*
-    (enlive/at (enlive/html-resource "appetizer/views/layout.html")
+    (enlive/at (enlive/html-resource "dujour/views/layout.html")
                [:div#main]
                (enlive/content
                 (concat
                  (enlive/html (format-query-results))
-                 (enlive/html-resource "appetizer/views/dc_experiment.html")))
+                 (enlive/html-resource "dujour/views/dc_experiment.html")))
                [:div#le_javascript]
                (enlive/content
                 (concat

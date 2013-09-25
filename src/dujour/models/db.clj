@@ -1,4 +1,4 @@
-(ns appetizer.models.db
+(ns dujour.models.db
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.java.jdbc.sql :as sql]))
 

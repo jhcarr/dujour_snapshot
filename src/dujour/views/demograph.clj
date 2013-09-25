@@ -1,10 +1,10 @@
-(ns appetizer.views.demograph
+(ns dujour.views.demograph
   (:require [hiccup.core :as html]
             [net.cgrand.enlive-html :as enlive]
             [clojure.java.jdbc :as jdbc]
             [clojure.java.jdbc.sql :as sql])
   (:use [clojure.string :only (join)]
-        [appetizer.models.db :only (db)]))
+        [dujour.models.db :only (db)]))
 
 (defn get-unique-products
   [database]
@@ -21,14 +21,14 @@
 
 (defn make-demograph []
   (enlive/emit*
-    (enlive/at (enlive/html-resource "appetizer/views/layout.html")
+    (enlive/at (enlive/html-resource "dujour/views/layout.html")
                [:div#main]
                (enlive/content
                 (concat
                  (enlive/html (format-query-results))
-                 (enlive/html-resource "appetizer/views/demograph.html")))
+                 (enlive/html-resource "/views/demograph.html")))
                [:div#le_javascript]
                (enlive/content
                 (concat
-                 (enlive/html [:script {:src "/js/demograph.js"}])
+                 (enlive/html [:script {:src "js/demograph.js"}])
                  (enlive/html [:script "$(document).ready(drawDemograph())"]))))))

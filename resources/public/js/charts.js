@@ -27,23 +27,7 @@ function checkinsDemonstration (location, dimension, lowDay, highDay, group1, gr
         .xAxis().tickFormat(d3.time.format("%Y-%m-%d"));
 }
 
-function checkinsLineGraph (location, dimension, lowDay, highDay, group1, group2) {
 
-    return dc.lineChart(location)
-        .height(450)
-        .width(900)
-        .dimension(dimension)
-        .group(group1)
-        .renderHorizontalGridLines(true)
-        .elasticX(true)
-        .xAxisPadding(datePadding)
-        .renderArea(true)
-        .stack(group2)
-        .x(d3.time.scale().domain([ lowDay, highDay ]))
-        .margins({top: 20, bottom: 20, right: 30, left: 30})
-        .xAxis().tickFormat(d3.time.format("%Y-%m-%d"));
-
-}
 
 function drawCheckins() {
 

@@ -14,7 +14,7 @@
         [clojure.walk :only (stringify-keys)]
         [clj-semver.core :only (newer?)]
         [dujour.migrations :only (migrate-db!)]
-        [dujour.controllers.handler :only (query-app)]
+        [dujour.controllers.handler]
         [dujour.checkins :only (checkins-app)]
         [clj-time.core :only (now)]
         [clj-time.coerce :only (to-timestamp)]
@@ -38,7 +38,7 @@
    :post [(ifn? %)]}
   (let [app (routes (GET "/" [:as request] (checkins-app database request))
                     (context "/query" [] (query-app database))
-                    ;; (context "/dashboard" [] (dashboard-app database)) 
+                    (context "/dashboard" [] (dashboard-app)) 
                     )]
     (-> app
       (wrap-with-buffer #(assoc (:geoip %) :uri (:uri %)) "/geo" 100)
